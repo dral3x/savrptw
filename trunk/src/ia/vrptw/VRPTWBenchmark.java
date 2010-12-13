@@ -9,7 +9,7 @@ package ia.vrptw;
  */
 public class VRPTWBenchmark {
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws InterruptedException {
     VRPTWProblem problem = new VRPTWProblem("C101", 100, 200);
     VRPTWSolver solver = new VRPTWSolver(5); // processori
     VRPTWSolution solution = solver.resolve(problem);
