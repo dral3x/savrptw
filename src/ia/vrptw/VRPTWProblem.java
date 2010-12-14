@@ -40,20 +40,17 @@ public class VRPTWProblem {
 		try{
 			// Open the file that is the first 
 			// command line parameter
-			FileInputStream fstream = new FileInputStream("problems/test1");
-			// Get the object of DataInputStream
+			FileInputStream fstream = new FileInputStream("problems/"+instance_name);
 			DataInputStream in = new DataInputStream(fstream);
 			BufferedReader br = new BufferedReader(new InputStreamReader(in));
 			String strLine;
-			//Read File Line By Line
-			while ((strLine = br.readLine()) != null)   {
-				// Print the content on the console
+			
+			while ((strLine = br.readLine()) != null)   { // read file line by line
 				String[] data = strLine.split("\t");
 				VRPTWCustomer customer = new VRPTWCustomer(Integer.parseInt(data[0]), Double.parseDouble(data[1]), Double.parseDouble(data[2]), Double.parseDouble(data[3]), Double.parseDouble(data[4]), Double.parseDouble(data[5]), Double.parseDouble(data[6]));
 				customers.add(customer);
 			}
-			//Close the input stream
-			in.close();
+			in.close(); //Close the input stream
 		} catch (Exception e){//Catch exception if any
 			System.err.println("Error: " + e.getMessage());
 		}
@@ -64,6 +61,9 @@ public class VRPTWProblem {
 	 */
 	public void show() {
 		System.out.println("Problema "+instance_name);
+		for (VRPTWCustomer c : customers) {
+			c.show();
+		}
 	}
 	
 	public String getInstanceName() {
@@ -83,5 +83,9 @@ public class VRPTWProblem {
 	
 	public int getMaxVehicles() {
 		return maxVehicles;
+	}
+	
+	public double getVehicleCapacity() {
+		return vehicleCapacity;
 	}
 }
