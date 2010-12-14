@@ -50,4 +50,20 @@ public class VRPTWUtilsTest {
 		
 		assertEquals("errato calcolo distanza tra 0,10 e 1,10", expected, result, 0.0001);
 	}
+	
+	@Test
+	public void testDistance5() {
+		double result = cut.distance(40, 50, 40, 60);
+		double expected = 10.0;
+		
+		assertEquals("errato calcolo distanza tra 40,50 e 40,60", expected, result, 0.0001);
+	}
+	
+	@Test
+	public void testDistance6() {
+		double result = cut.distance(40, 50, 50, 50);
+		double expected = 10.0;
+		
+		assertEquals("errato calcolo distanza tra 40,50 e 50,50", expected, result, 0.0001);
+	}
 }

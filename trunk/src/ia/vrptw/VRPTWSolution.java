@@ -1,5 +1,6 @@
 package ia.vrptw;
 
+import java.text.DecimalFormat;
 import java.util.LinkedList;
 
 /**
@@ -31,11 +32,6 @@ route 10: 15 48 16 12 10 88 60 75 87 58 53;
   boolean completed;
   LinkedList<VRPTWRoute> routes;
   
-  // Since the basic criterion of optimization is the num- ber of routes, the constant	should be large enough, so that
-  // delta*(c*n + e_min) >> d
-  double delta = 0.5; // 0.5 ... 5
-  
-
   public VRPTWSolution(VRPTWProblem problem) {
 	  if (problem == null)
 		  throw new IllegalArgumentException("Invalid problem instance");
@@ -50,7 +46,8 @@ route 10: 15 48 16 12 10 88 60 75 87 58 53;
   public double totalTravelDistance() {
 	  double _cost = 0;
 	  for(int r=0; r<routes.size(); r++) {
-		  _cost += routes.get(r).travelDistance(_problem);
+		  //_cost += routes.get(r).travelDistance(_problem);
+		  _cost += routes.get(r).travelDistance();
 	  }
 	  return _cost;
   }
@@ -62,15 +59,24 @@ route 10: 15 48 16 12 10 88 60 75 87 58 53;
 	  double n = _problem.getNumberOfCustomers();
 	  double e_min = 0.0;
 	  
-	  return d + delta*(c*n + e_min);
+	  return d + VRPTWParameters.delta*(c*n + e_min);
   }
   
-  public void show() {
-    if (completed) {
-      System.out.println("Soluzione completa a "+_instance_name);
-    } else {
-      System.out.println("Soluzione parziale a "+_instance_name);
-    }
+  	public void show() { 
+// Problem instance: RC104. Distance: 1135.48. Vehicles: 10.
+// route 1: 86 64 90 77 85 52 65 84 67;
+// route 2: 23 21 50 20 24 22 49 19 26 25;
+  		
+	  double km = 0.0;
+	  for (VRPTWRoute r : routes)
+		  km += r._travel_distance;
+	  
+	  System.out.println("Problem instance: "+_instance_name + ". Distance: "+km+ ". Vhicles: "+routes.size()+".");
+
+	  for (int i=0; i<routes.size(); i++) {
+		  System.out.print("route "+(i+1)+": ");
+		  routes.get(i).show();
+	  }
   }
   
   public void addRoute(VRPTWRoute route) {

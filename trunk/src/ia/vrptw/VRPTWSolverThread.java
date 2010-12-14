@@ -6,6 +6,9 @@ import java.util.concurrent.CyclicBarrier;
 
 public class VRPTWSolverThread implements Runnable {
 	
+	boolean debug = false;
+	
+	int _id;
 	boolean go;
 	VRPTWSolution _best_local_solution;
 	VRPTWSolution _coworker_solution;
@@ -15,15 +18,14 @@ public class VRPTWSolverThread implements Runnable {
 	LinkedList<VRPTWSolution> _solutions;
 	CyclicBarrier _start_barrier;
 	CyclicBarrier _done_barrier;
-	CyclicBarrier _cooperate_barrier;
 	
 	VRPTWSolverThread _coworker;
 	
 	double temperature;
-	double gamma = 0.001; // 0.001 - 1.0
 	int customers;
 	
-	public VRPTWSolverThread(VRPTWProblem problem, VRPTWSolution solution, LinkedList<VRPTWSolution> solutions, CyclicBarrier start, CyclicBarrier done, CyclicBarrier cooperate) {
+	public VRPTWSolverThread(int id, VRPTWProblem problem, VRPTWSolution solution, LinkedList<VRPTWSolution> solutions, CyclicBarrier start, CyclicBarrier done) {
+		_id = id;
 		_old_solution = solution;
 		_best_local_solution = solution;
 		_problem = problem;
@@ -31,16 +33,19 @@ public class VRPTWSolverThread implements Runnable {
 		
 		_start_barrier = start;
 		_done_barrier = done;
-		_cooperate_barrier = cooperate;
 		
-		temperature = gamma * _old_solution.cost();
+		temperature = VRPTWParameters.gamma * _old_solution.cost();
 		customers = problem.getNumberOfCustomers();
 		
 		_coworker_solution = null;
 		go = true;
 	}
 	
-	public void cooperateWith(VRPTWSolverThread socio) {
+	public void activateDebugMode() {
+		debug = true;
+	}
+	
+	public void setCoWorker(VRPTWSolverThread socio) {
 		_coworker = socio;
 	}
 	
@@ -55,11 +60,15 @@ public class VRPTWSolverThread implements Runnable {
 	public void stop() {
 		go = false;
 	}
+	
+	public int getID() {
+		return _id;
+	}
 
 	@Override
 	public void run() {
 		
-		System.out.println("SolverThread "+Thread.currentThread().getId()+" avviato!");
+		if (debug) System.out.println("SolverThread "+_id+" avviato!");
 		
 		// attende partenza 
 		try {
@@ -72,10 +81,10 @@ public class VRPTWSolverThread implements Runnable {
 		
 		while (go) {
 			
-			// fa quel che deve
-			
+			// faccio n iterazioni, confronto la mia soluzione con quella del collega e ciclo
+			// avanti cos“ fino a n^2 spostamenti, dopo i quali consegno la soluzione al "capo"
 			for (int iteration=1; iteration < customers*customers; iteration++ ) {
-				System.out.println("thread-"+Thread.currentThread().getId()+" iterazione "+iteration);
+				if (debug) System.out.println("thread-"+_id+" iterazione "+iteration);
 				_best_local_solution = annealing_step(_best_local_solution);
 				
 				// ogni n iterazioni (n = numero di clienti) coopero col "vicino"
@@ -88,7 +97,7 @@ public class VRPTWSolverThread implements Runnable {
 					synchronized(this) {
 						while (_coworker_solution == null) {
 							try {
-								System.out.println("thread-"+Thread.currentThread().getId()+" attendo gli altri");
+								if (debug) System.out.println("thread-"+_id+" attendo il collega "+_coworker.getID());
 								this.wait();
 							} catch (InterruptedException e) {
 								go = false;
@@ -98,7 +107,7 @@ public class VRPTWSolverThread implements Runnable {
 					}
 					
 					// prendo la solutione del vicino se  migliore della  mia
-					System.out.println("thread-"+Thread.currentThread().getId()+" controllo solutione arrivata dagli altri");
+					if (debug) System.out.println("thread-"+_id+" controllo solutione arrivata dal collega "+_coworker.getID());
 					if (_coworker_solution.cost() < _best_local_solution.cost()) {
 						_best_local_solution = _coworker_solution;
 					}
@@ -107,40 +116,48 @@ public class VRPTWSolverThread implements Runnable {
 			}
 			
 			// consegna la soluzione trovata
-			System.out.println("thread-"+Thread.currentThread().getId()+" consegna soluzione best_local");
+			if (debug) System.out.println("thread-"+_id+" consegna soluzione best_local");
 			synchronized(_solutions) {
 				_solutions.add(_best_local_solution);
 			}
-			//System.out.println("aggiunta soluzione");
 
-			// attendo una notify dal solver
+			
 			try {
+				// attendo che tutti i thread consegnino la loro soluzione
 				_done_barrier.await();
-				// attendo una notify dal solver
-				System.out.println("thread-"+Thread.currentThread().getId()+" in attesa di iniziare di nuovo");
+				
+				// attendo una notify dal solver per riprendere il lavoro
+				if (debug) System.out.println("thread-"+_id+" in attesa di iniziare di nuovo");
 				_start_barrier.await();
 			} catch (BrokenBarrierException e) {
 				go = false;
 			} catch (InterruptedException e) {
 				go = false;
 			}
-			//System.out.println("sono stato notificato!");
 			
 		}
 		
-		System.out.println("SolverThread "+Thread.currentThread().getId()+" termina");
+		if (debug) System.out.println("SolverThread "+_id+" termina");
 	}
 	
 	private VRPTWSolution annealing_step(VRPTWSolution start_solution) {
 		// TODO da implementare seriamente
 		VRPTWSolution newSolution = start_solution;
 		
+		// On every step a neighbor solution is determined by either mov-
+		// ing the best customer from one route to the best place (in
+		// terms of the solution cost) of another route (perhaps empty) or
+		// by selecting the best customer and moving it to the best place
+		// within its route. All the routes mentioned above are
+		// chosen randomly. The neighbor solutions of lower costs obtained
+		// in this way are always accepted.
+		// The solutions of higher costs are accepted with the probability
+		// T_i / (T_i + delta)
+		
+		
 		try {
-			Thread.sleep(Math.round(Math.random()*500));
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+			Thread.sleep(Math.round(Math.random()*100));
+		} catch (InterruptedException e) { }
 		
 		return newSolution;
 	}
