@@ -1,0 +1,17 @@
+C101-C109	vehicle capacity 200
+C201-C208	vehicle capacity 700
+
+R101-R112	vehicle capacity 200
+R201-R211  	vehicle capacity 1000
+
+RC101-RC108	vehicle capacity 200
+RC201-RC208	vehicle capacity 1000
+
+***********************************************************
+
+regexp
+^( +)(\d+)( +)(\d+)\.(\d{2})( +)(\d+)\.(\d{2})( +)(\d+)\.(\d{2})( +)(\d+)\.(\d{2})( +)(\d+)\.(\d{2})( +)(\d+)\.(\d{2})(.*)$
+
+maschera di uscita
+$2\t$4.$5\t$7.$8\t$10.$11\t$13.$14\t$16.$17\t$19.$20
+
