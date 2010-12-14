@@ -38,17 +38,25 @@ public class VRPTWSolver {
 		VRPTWSolution finalSolution = generateFirstSolution(problem);
 		LinkedList<VRPTWSolution> solutions = new LinkedList<VRPTWSolution>();
 		
-		// istanzio i thread paralleli e li faccio partire dalla soluzione generata
+		// istanzio i thread paralleli
 		threads = new VRPTWSolverThread[_processors];
 		CyclicBarrier _start_barrier = new CyclicBarrier(_processors+1);
 		CyclicBarrier _done_barrier = new CyclicBarrier(_processors+1);
+		CyclicBarrier _cooperate_barrier = new CyclicBarrier(_processors);
 	     
 		for (int i=0; i<_processors; i++) {
-			threads[i] = new VRPTWSolverThread(problem, finalSolution, solutions, _start_barrier, _done_barrier);
+			threads[i] = new VRPTWSolverThread(problem, finalSolution, solutions, _start_barrier, _done_barrier, _cooperate_barrier);
+			if (i>0)
+				threads[i].cooperateWith(threads[i-1]);
+		}
+		threads[0].cooperateWith(threads[_processors-1]);
+		
+		// faccio partire i thread paralleli dalla soluzione generata
+		for (int i=0; i<_processors; i++) {
 			new Thread(threads[i]).start();
 		}
 		
-		int tau = 100;
+		int tau = 10;
 		int equilibrium = 0;
 		while (equilibrium < tau) {
 			System.out.println("giro "+equilibrium);
@@ -56,7 +64,7 @@ public class VRPTWSolver {
 			try {
 				_start_barrier.await();
 				_start_barrier.reset();
-				//System.out.println("attendo che tutti i risolutori abbiano consegnato qualcosa");
+				System.out.println("thread-"+Thread.currentThread().getId()+" attendo che tutti i risolutori abbiano consegnato qualcosa");
 				_done_barrier.await();
 				_done_barrier.reset();
 			} catch (InterruptedException e) {
@@ -72,6 +80,7 @@ public class VRPTWSolver {
 			//System.out.println("ho ricevuto tutte le soluzioni, sceglio la migliore e vado avanti");
 			
 			// scelgo la soluzione migliore tra quelle trovate finora
+			System.out.println("thread-"+Thread.currentThread().getId()+" scelgo la soluzione migliore tra quelle consegnate");
 			VRPTWSolution bestSolution = solutions.remove();
 			while (solutions.size() > 0) {
 				VRPTWSolution s = solutions.remove();
@@ -89,26 +98,34 @@ public class VRPTWSolver {
 			}
 			
 			// fermo i thread se non ho fatto progressi
-			if (equilibrium >= tau) {
-				for (int i=0; i<_processors; i++) {
-					threads[i].stop();
-				}
-				try {
-					_start_barrier.await();
-				} catch (BrokenBarrierException e) {
-					break;
-				}
-			}
-			
-			
+//			if (equilibrium >= tau) {
+//				for (int i=0; i<_processors; i++) {
+//					threads[i].stop();
+//				}
+//				try {
+//					_start_barrier.await();
+//				} catch (BrokenBarrierException e) {
+//					break;
+//				}
+//			}
 			
 		}
-	
+
+		// fermo i thread se non ho fatto progressi
+		for (int i=0; i<_processors; i++) {
+			threads[i].stop();
+		}
+		try {
+			_start_barrier.await();
+		} catch (BrokenBarrierException e) { }
+		
 		// ritorno la meglio soluzione trovata finora
 		return finalSolution;
 	}
 	
 	private VRPTWSolution generateFirstSolution(VRPTWProblem problem)  {
+		// TODO da implementare seriamente
+		
 		VRPTWSolution solution = new VRPTWSolution(problem);
 		
 		//for (int c=0; c<problem.getNumberOfCustomers(); c++) {
