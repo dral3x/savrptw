@@ -19,9 +19,9 @@ public class VRPTWSolver {
 	 * Questa classe e' sostanzialmente P0 nel paper.
 	 */
 	public static void main(String[] args) throws InterruptedException {
-		VRPTWProblem problem = new VRPTWProblem("test1", 10, 200);
-		problem.show();
-		VRPTWSolver solver = new VRPTWSolver(4); // processori
+		VRPTWProblem problem = new VRPTWProblem("RC101", 25, 200);
+		//problem.show();
+		VRPTWSolver solver = new VRPTWSolver(2); // processori
 		solver.activateDebugMode();
 		System.out.println("* inizio ottimizzazione *");
 		VRPTWSolution solution = solver.resolve(problem);
@@ -34,7 +34,7 @@ public class VRPTWSolver {
 	private boolean debug = false;
 
 	public VRPTWSolver(int processors) {
-		if (processors % 2 == 1)
+		if (processors > 1 && processors % 2 == 1)
 			throw new IllegalArgumentException("numero di thread non pari");
 		
 		_processors = processors;
@@ -60,10 +60,10 @@ public class VRPTWSolver {
 			threads[i] = new VRPTWSolverThread(i, problem, finalSolution, solutions, _start_barrier, _done_barrier);
 			if (debug)
 				threads[i].activateDebugMode();
-			if (i>0)
-				threads[i].setCoWorker(threads[i-1]);
+			//if (i>0)
+			//	threads[i].setCoWorker(threads[i-1]);
 		}
-		threads[0].setCoWorker(threads[_processors-1]);
+		//threads[0].setCoWorker(threads[_processors-1]);
 		
 		// faccio partire i thread paralleli dalla soluzione generata
 		for (int i=0; i<_processors; i++) {
@@ -72,7 +72,8 @@ public class VRPTWSolver {
 		
 		int equilibrium = 0;
 		while (equilibrium < VRPTWParameters.tau) {
-			if (debug) System.out.println("Solver: giro "+equilibrium);
+			//if (debug)
+				System.out.println("Solver: giro "+equilibrium);
 			
 			try {
 				_start_barrier.await();
@@ -146,7 +147,7 @@ public class VRPTWSolver {
 		VRPTWRoute route = new VRPTWRoute(warehouse, problem.getVehicleCapacity());
 		while (!customerToServe.isEmpty()) {
 			VRPTWCustomer customer = customerToServe.pollFirst();
-			boolean capacity_test = route.capacity-customer._demand > 0; // ho ancora spazio nel camion per quello che il cliente di turno vuole
+			boolean capacity_test = route.getRemainCapacity()-customer._demand > 0; // ho ancora spazio nel camion per quello che il cliente di turno vuole
 			boolean timewindow_test = route.travelDistance() < customer._due_date; // ce la faccio a portarglielo dentro alla sua deadline
 			if (!timewindow_test || !capacity_test) {
 				solution.addRoute(route);

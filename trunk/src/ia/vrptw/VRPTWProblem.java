@@ -88,4 +88,7 @@ public class VRPTWProblem {
 	public double getVehicleCapacity() {
 		return vehicleCapacity;
 	}
+	public VRPTWCustomer getWarehouse() {
+		return customers.element();
+	}
 }
