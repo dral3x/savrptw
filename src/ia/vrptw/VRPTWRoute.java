@@ -62,6 +62,11 @@ public class VRPTWRoute {
 				// non ha spazio per la merce del cliente
 				return false;
 			}
+			if (time <  c._ready_time) {
+				// non puo' iniziare a servirlo prima che sia iniziata la finestra temporale
+				time = c._read_time; 
+			}
+
 			time += c._service_time;
 			travel_distance += distance;
 			capacity -= customer._demand;
@@ -76,6 +81,37 @@ public class VRPTWRoute {
 		return true;
 	}
 	
+	public void removeCustomer(VRPTWCustomer customer) {
+		// check che il cliente sia in questa strada
+		if (customers.contains(customer) {
+			// rimuoverlo seriamente
+			customers.remove(customer);
+			_
+
+			// ricalcolo tempi e km
+		double time = 0;
+		double travel_distance = 0;
+		VRPTWCustomer last_customer = _warehouse;
+		for (VRPTWCustomer c : newRoute) {
+			double distance = VRPTWUtils.distance(last_customer.getXPosition(), last_customer.getYPosition(), customer.getXPosition(), customer.getYPosition());
+			time += distance;
+			if (time <  c._ready_time) {
+				// non puo' iniziare a servirlo prima che sia iniziata la finestra temporale
+				time = c._read_time; 
+			}
+
+			time += c._service_time;
+			travel_distance += distance;
+		}
+		
+		// aggiornare _travel_distance, _capacity, _travel_time;
+		_travel_distance = travel_distance;
+		_travel_time = time;
+		capacity += customer._demand;
+
+		}
+	}	
+
 	public double getRemainCapacity() {
 		return _capacity;
 	}
