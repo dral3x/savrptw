@@ -169,8 +169,9 @@ public class VRPTWSolverThread implements Runnable {
 		// sceglo il cliente da spostare
 		VRPTWRoute r1 = newSolution.routes.get(new Long(Math.round(Math.random()*(newSolution.routes.size()-1))).intValue());
 		int indexOfBestClient = new Long(Math.round(Math.random()*(r1.customers.size()-1))).intValue();
-		VRPTWCustomer c1 = r1.customers.remove(indexOfBestClient);
-		if (r1.customers.size() == 0) {
+		VRPTWCustomer c1 = r1.customers.get(indexOfBestClient);
+		r1.removeCustomer(c1);
+		if (r1.travelDistance() < 0.0001) {
 			newSolution.removeRoute(r1);
 		}
 
