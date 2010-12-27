@@ -85,7 +85,7 @@ public class VRPTWSolverThread implements Runnable {
 		while (go) {
 			
 			// faccio n iterazioni, confronto la mia soluzione con quella del collega e ciclo
-			// avanti così fino a n^2 spostamenti, dopo i quali consegno la soluzione al "capo"
+			// avanti cosÔøΩ fino a n^2 spostamenti, dopo i quali consegno la soluzione al "capo"
 			for (int iteration=0; iteration < customers*customers; iteration++ ) {
 				//if (debug) System.out.println("thread-"+_id+" iterazione "+iteration);
 				_best_local_solution = annealing_step(_best_local_solution);
@@ -111,7 +111,7 @@ public class VRPTWSolverThread implements Runnable {
 					}
 
 
-					// prendo la solutione del vicino se è migliore della  mia
+					// prendo la solutione del vicino se ÔøΩ migliore della  mia
 					if (debug) System.out.println("thread-"+_id+" controllo solutione arrivata dal collega "+_coworker.getID());
 					if (_coworker_solution.cost() < _best_local_solution.cost()) {
 						_best_local_solution = _coworker_solution;
@@ -141,6 +141,7 @@ public class VRPTWSolverThread implements Runnable {
 				go = false;
 			}
 			
+			temperature *= VRPTWParameters.beta;
 		}
 		
 		if (debug) System.out.println("SolverThread "+_id+" termina");
@@ -197,8 +198,8 @@ public class VRPTWSolverThread implements Runnable {
 		// controllo se ho migliorato o meno		
 		double cost_new = newSolution.cost();
 		double cost_old = start_solution.cost();
-		if (cost_old < cost_new && (Math.random()*(cost_new/(cost_new + VRPTWParameters.delta)) >= 0.5)) {
-			// rifiuto la nuova soluzione più cara della vecchia
+		if (cost_old < cost_new && (Math.random()*(temperature/(temperature + VRPTWParameters.delta)) < 0.5)) {
+			// rifiuto la nuova soluzione piÔøΩ cara della vecchia
 			newSolution = start_solution;
 		}
 		
