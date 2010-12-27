@@ -50,13 +50,13 @@ route 10: 15 48 16 12 10 88 60 75 87 58 53;
 	}
 
 	public double cost() {
-		// cost(S) = d + delta*(c*n + e_min)
+		// cost(S) = d + sigma*(c*n + e_min)
 		double d = totalTravelDistance();
 		double c = routes.size();
 		double n = _problem.getNumberOfCustomers();
 		double e_min = 0.0;
 
-		return d + VRPTWParameters.delta*(c*n + e_min);
+		return d + VRPTWParameters.sigma*(c*n + e_min);
 	}
 
 	public void show() { 
