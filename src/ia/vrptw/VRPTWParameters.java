@@ -6,17 +6,18 @@ public class VRPTWParameters {
 	static final int tau = 40; // 20 - 40 
 
 	// costante per pesare il costo dovuto al numero di rotte rispetto al costo dovuto alla distanza percorsa
-	// gamma*(c*n + e_min) >> d
 	static final double sigma = 100; // FIXME: costante messa a caso! dipenderÃ  dall'ordine di grandezza di d nei problemi trattati
-	
-	// costante di proporzionalitï¿½ per regolare la temperatura con il costo della soluzione
+
+	// costante di proporzionalitˆ per regolare la temperatura con il costo della soluzione
 	static final double gamma = 1; // 0.001 - 1.0
 
-	// costante di proporzionalitï¿½ per abbassare la temperatura ad ogni step
+	// costante di proporzionalitˆ per abbassare la temperatura ad ogni step
 	static final double beta = 0.92; // 0.1 - 0.99
 	
-	// variazione del costo della soluzione per calcolare la probabilitï¿½ di accettazione della soluzione peggiorativa
-	static final double delta = 5.0; // 0.5 - 5
+	// variazione del costo della soluzione per calcolare la probabilitˆ di accettazione della soluzione peggiorativa
+	// Since the basic criterion of optimization is the number of routes, the constant should be large enough, so that
+	// delta*(c*n + e_min) >> d
+	static final double delta = 5; // 0.5 - 5
 	
 	
 	static final int insertion_attempt = 10;

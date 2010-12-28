@@ -19,9 +19,9 @@ public class VRPTWSolver {
 	 * Questa classe e' sostanzialmente P0 nel paper.
 	 */
 	public static void main(String[] args) throws InterruptedException {
-		VRPTWProblem problem = new VRPTWProblem("RC101", 25, 200);
+		VRPTWProblem problem = new VRPTWProblem("RC101", 50, 200);
 		//problem.show();
-		VRPTWSolver solver = new VRPTWSolver(2); // processori
+		VRPTWSolver solver = new VRPTWSolver(1); // processori
 		solver.activateDebugMode();
 		System.out.println("* inizio ottimizzazione *");
 		VRPTWSolution solution = solver.resolve(problem);
@@ -48,6 +48,9 @@ public class VRPTWSolver {
 	public VRPTWSolution resolve(VRPTWProblem problem) throws InterruptedException {
 		// scelgo una soluzione da cui partire (a caso?)
 		VRPTWSolution finalSolution = generateFirstSolution(problem);
+		System.out.println("Soluzione di partenza: costo " + finalSolution.cost() + " con " + finalSolution.routes.size() + " mezzi");
+		//finalSolution.show();
+		
 		LinkedList<VRPTWSolution> solutions = new LinkedList<VRPTWSolution>();
 		
 		// istanzio i thread paralleli
@@ -58,8 +61,8 @@ public class VRPTWSolver {
 	     
 		for (int i=0; i<_processors; i++) {
 			threads[i] = new VRPTWSolverThread(i, problem, finalSolution, solutions, _start_barrier, _done_barrier);
-			if (debug)
-				threads[i].activateDebugMode();
+			//if (debug)
+			//	threads[i].activateDebugMode();
 			//if (i>0)
 			//	threads[i].setCoWorker(threads[i-1]);
 		}
@@ -73,13 +76,13 @@ public class VRPTWSolver {
 		int equilibrium = 0;
 		while (equilibrium < VRPTWParameters.tau) {
 			//if (debug)
-				System.out.println("Solver: giro "+equilibrium);
+			//	System.out.println("Solver: giro "+equilibrium);
 			
 			try {
 				_start_barrier.await();
 				_start_barrier.reset();
 				
-				if (debug) System.out.println("Solver: attendo che tutti i risolutori abbiano consegnato qualcosa");
+				//if (debug) System.out.println("Solver: attendo che tutti i risolutori abbiano consegnato qualcosa");
 				_done_barrier.await();
 				_done_barrier.reset();
 			} catch (InterruptedException e) {
@@ -94,7 +97,7 @@ public class VRPTWSolver {
 			}
 			
 			// scelgo la soluzione migliore tra quelle trovate finora
-			if (debug) System.out.println("Solver: scelgo la soluzione migliore tra quelle consegnate");
+			//if (debug) System.out.println("Solver: scelgo la soluzione migliore tra quelle consegnate");
 			VRPTWSolution bestSolution = solutions.remove();
 			while (solutions.size() > 0) {
 				VRPTWSolution s = solutions.remove();
@@ -107,6 +110,7 @@ public class VRPTWSolver {
 			if (bestSolution.cost() < finalSolution.cost()) {
 				finalSolution = bestSolution;
 				equilibrium = 0;
+				System.out.println("Trovata soluzione migliore ... costo " + finalSolution.cost() + " con " + finalSolution.routes.size() + " mezzi");
 			} else {
 				equilibrium ++;
 			}
@@ -133,7 +137,6 @@ public class VRPTWSolver {
 		int vehicle = 0;
 		VRPTWCustomer warehouse = null;
 		
-		//Comparator<VRPTWCustomer> comparator = new VRPTWCustomerEndTimeWindowComparator();
 		LinkedList<VRPTWCustomer> customerToServe = new LinkedList<VRPTWCustomer>();
 		for (VRPTWCustomer c : problem.customers) {
 			if (c.isWarehouse())
@@ -146,7 +149,7 @@ public class VRPTWSolver {
 		// finch ci sono ancora clienti, bisogna servirli
 		VRPTWRoute route = new VRPTWRoute(warehouse, problem.getVehicleCapacity());
 		while (!customerToServe.isEmpty()) {
-			VRPTWCustomer customer = customerToServe.pollFirst();
+			VRPTWCustomer customer = customerToServe.remove();
 			boolean capacity_test = route.getRemainCapacity()-customer._demand > 0; // ho ancora spazio nel camion per quello che il cliente di turno vuole
 			boolean timewindow_test = route.travelDistance() < customer._due_date; // ce la faccio a portarglielo dentro alla sua deadline
 			if (!timewindow_test || !capacity_test) {
@@ -155,7 +158,7 @@ public class VRPTWSolver {
 			}
 			route.addCustomer(customer);
 		}
-		if (route.size()>1) {
+		if (route.size()>0) {
 			solution.addRoute(route);
 		}
 		
