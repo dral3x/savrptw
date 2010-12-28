@@ -51,12 +51,28 @@ public class VRPTWCustomer {
 		return _due_date;
 	}
 	
+	public double minimumDistanceToRoute(VRPTWRoute route) {
+		
+		VRPTWCustomer nearest_customer = route.customers.get(0);
+		double nearest_distance = VRPTWUtils.distance(this.getXPosition(), this.getYPosition(), nearest_customer.getXPosition(), nearest_customer.getYPosition());
+		for (VRPTWCustomer c : route.customers) {
+			double distance = VRPTWUtils.distance(this.getXPosition(), this.getYPosition(), c.getXPosition(), c.getYPosition());
+			if (distance < nearest_distance) {
+				nearest_distance = distance;
+				nearest_customer = c;
+			}
+		}
+		
+		return nearest_distance;
+		
+	}
+	
 	public void show() {
 		System.out.println(_id + "\t" + _position_x + "\t" + _position_y + "\t" + _demand + "\t"+ _ready_time + "\t" + _due_date + "\t" + _service_time);
 	}
 	
 	public String toString() {
-		return "Customer " + _id + " position=(" + _position_x + "," + _position_y + ") demand=" + _demand + " time window = from "+ _ready_time + " to " + _due_date + " service time=" + _service_time;
+		return "Customer " + _id + " position=(" + _position_x + "," + _position_y + ") demand=" + _demand + " time window=["+ _ready_time + " - " + _due_date + "] service time=" + _service_time;
 	}
 	
 }

@@ -64,7 +64,7 @@ public class VRPTWRoute {
 			}
 			if (time <  c._ready_time) {
 				// non puo' iniziare a servirlo prima che sia iniziata la finestra temporale
-				time = c._read_time; 
+				time = c._ready_time; 
 			}
 
 			time += c._service_time;
@@ -83,21 +83,20 @@ public class VRPTWRoute {
 	
 	public void removeCustomer(VRPTWCustomer customer) {
 		// check che il cliente sia in questa strada
-		if (customers.contains(customer) {
+		if (customers.contains(customer)) {
 			// rimuoverlo seriamente
 			customers.remove(customer);
-			_
 
 			// ricalcolo tempi e km
 		double time = 0;
 		double travel_distance = 0;
 		VRPTWCustomer last_customer = _warehouse;
-		for (VRPTWCustomer c : newRoute) {
+		for (VRPTWCustomer c : customers) {
 			double distance = VRPTWUtils.distance(last_customer.getXPosition(), last_customer.getYPosition(), customer.getXPosition(), customer.getYPosition());
 			time += distance;
 			if (time <  c._ready_time) {
 				// non puo' iniziare a servirlo prima che sia iniziata la finestra temporale
-				time = c._read_time; 
+				time = c._ready_time; 
 			}
 
 			time += c._service_time;
@@ -107,7 +106,7 @@ public class VRPTWRoute {
 		// aggiornare _travel_distance, _capacity, _travel_time;
 		_travel_distance = travel_distance;
 		_travel_time = time;
-		capacity += customer._demand;
+		_capacity += customer._demand;
 
 		}
 	}	
@@ -156,5 +155,20 @@ public class VRPTWRoute {
 		System.out.println(customers.get(customers.size()-1).getID() + ";");
 	}
 	
+	public String toString() {
+		String description = "";
+		
+		for (int c = 0; c<customers.size()-1; c++) {
+			description += customers.get(c).getID() + " ";
+		}
+		description += customers.get(customers.size()-1).getID() + ";";
+		
+		return description;
+	}
+	
+	
+	public boolean serve(VRPTWCustomer customer) {
+		return customers.contains(customer);
+	}
 
 }
