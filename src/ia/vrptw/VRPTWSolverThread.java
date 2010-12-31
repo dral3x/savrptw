@@ -2,6 +2,7 @@ package ia.vrptw;
 
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.ListIterator;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 
@@ -87,7 +88,7 @@ public class VRPTWSolverThread implements Runnable {
 		while (go) {
 			
 			// faccio n iterazioni, confronto la mia soluzione con quella del collega e ciclo
-			// avanti così fino a n^2 spostamenti, dopo i quali consegno la soluzione al "capo"
+			// avanti cosÔøΩ fino a n^2 spostamenti, dopo i quali consegno la soluzione al "capo"
 			for (int iteration=0; iteration < customers*customers; iteration++ ) {
 				//if (debug) System.out.println("thread-"+_id+" iterazione "+iteration);
 				_best_local_solution = annealing_step(_best_local_solution, temperature);
@@ -113,7 +114,7 @@ public class VRPTWSolverThread implements Runnable {
 					}
 
 
-					// prendo la solutione del vicino se è migliore della  mia
+					// prendo la solutione del vicino se ÔøΩ migliore della  mia
 					if (debug) System.out.println("thread-"+_id+" controllo solutione arrivata dal collega "+_coworker.getID());
 					if (_coworker_solution.cost() < _best_local_solution.cost()) {
 						_best_local_solution = _coworker_solution;
@@ -149,8 +150,85 @@ public class VRPTWSolverThread implements Runnable {
 		if (debug) System.out.println("SolverThread "+_id+" termina");
 	}
 	
-	
+
 	protected static VRPTWSolution annealing_step(VRPTWSolution start_solution, double temperature) {
+		VRPTWSolution newSolution = start_solution.clone();
+
+		// scelgo la route da allungare
+		int indexOfFirstRoute = new Long(Math.round(Math.random()*(newSolution.routes.size()-1))).intValue();
+		VRPTWRoute r1 = newSolution.routes.get(indexOfFirstRoute);
+		//System.out.println("scelto route: "+r1);
+		
+		// prendo il cliente piÔøΩ vicino alla route selezionata
+		LinkedList<VRPTWCustomer> externalCustomers = new LinkedList<VRPTWCustomer>();
+		for (VRPTWRoute r : newSolution.routes) {
+			if (r != r1) {
+				for (VRPTWCustomer c : r.customers)
+					if (!c.isWarehouse())
+						externalCustomers.add(c);
+				
+			}
+		}
+		Collections.sort(externalCustomers, new VRPTWCustomerNearestToRouteComparator(r1));
+		VRPTWCustomer nearestCustomer = externalCustomers.remove();;
+		//System.out.println("il customer piÔøΩ vicino ÔøΩ "+nearestCustomer);
+		
+		// lo rimuovo dalla sua strada originale
+		for (VRPTWRoute r : newSolution.routes) {
+			if (r.serve(nearestCustomer)) {
+				r.removeCustomer(nearestCustomer);
+				if (r.travelDistance() < 0.0001) { // se era un cliente solitario, rimuovo la ruote vuota
+					newSolution.removeRoute(r);
+					System.out.println("Rimozione di rotta <------");
+				}
+				break;
+			}
+		}
+		
+		// Calcola potenziali inserimenti nella rotta corrente 
+		LinkedList<VRPTWCandidateCustomerInsertion> candidate_insertions = r1.candidate_insertions(nearestCustomer);
+		Collections.sort(candidate_insertions);
+		
+		// Prova a fare gli inserimenti con incremento di costo minore
+		ListIterator<VRPTWCandidateCustomerInsertion> itr = candidate_insertions.listIterator();
+		VRPTWCandidateCustomerInsertion insertion = null;
+		boolean inserted = false;
+		
+		while (itr.hasNext() && !inserted) {
+			insertion = itr.next();
+			inserted = r1.addCustomer(insertion.customer, insertion.prev_customer_idx, insertion.next_customer_idx);
+		}
+		
+		// Se tutti gli inserimenti non sono fattibili nella rotta corrente crea una nuova rotta
+		// TODO: non √® un po' un controsenso? cerchi un custumer vicino alla rotta ma se non trovi posto per inserirlo ne crei una nuova (quando l'obiettivo √® minimizzare le rotte)
+		if (!inserted) {
+			VRPTWRoute route = new VRPTWRoute(r1._warehouse, r1._initial_capacity);
+			route.addCustomer(nearestCustomer);
+			newSolution.addRoute(route);
+			System.out.println("Generazione di una nuova rotta <------");
+		}
+		
+		// controllo se ho migliorato o meno		
+		double cost_new = newSolution.cost();
+		double cost_old = start_solution.cost();
+		if (cost_new > cost_old) {
+			System.out.print("thread: soluzione peggiore di quella di partenza: costo " + newSolution.cost() + " con " + newSolution.routes.size() + " mezzi");
+			if (Math.random() < (temperature/(temperature + VRPTWParameters.delta))) {
+				System.out.println(" accettata comunque (T=" + temperature + ")");
+			} else {
+				// rifiuto la nuova soluzione, torno alla vecchia
+				newSolution = start_solution;
+				System.out.println(" rifiutata");
+			}
+		} else {
+			System.out.println("thread: soluzione migliore di quella di partenza: costo " + newSolution.cost() + " con " + newSolution.routes.size() + " mezzi");
+		}
+
+		
+		return newSolution;		
+	}
+	
+	protected static VRPTWSolution annealing_step_old(VRPTWSolution start_solution, double temperature) {
 		VRPTWSolution newSolution = start_solution.clone();
 
 		// sceglo la route da allungare
@@ -158,7 +236,7 @@ public class VRPTWSolverThread implements Runnable {
 		VRPTWRoute r1 = newSolution.routes.get(indexOfFirstRoute);
 		//System.out.println("scelto route: "+r1);
 		
-		// prendo il cliente più vicino alla route selezionata
+		// prendo il cliente piÔøΩ vicino alla route selezionata
 		LinkedList<VRPTWCustomer> externalCustomers = new LinkedList<VRPTWCustomer>();
 		for (VRPTWRoute r : newSolution.routes) {
 			if (r != r1) {
@@ -169,7 +247,7 @@ public class VRPTWSolverThread implements Runnable {
 		}
 		Collections.sort(externalCustomers, new VRPTWCustomerNearestToRouteComparator(r1));
 		VRPTWCustomer nearestCustomer = externalCustomers.remove();;
-		//System.out.println("il customer più vicino è "+nearestCustomer);
+		//System.out.println("il customer piÔøΩ vicino ÔøΩ "+nearestCustomer);
 		
 		// lo rimuovo dalla sua strada originale
 		for (VRPTWRoute r : newSolution.routes) {
@@ -183,7 +261,7 @@ public class VRPTWSolverThread implements Runnable {
 		}
 		
 		// sposto il cliente vicino sulla strada scelta
-		boolean insered = r1.addCustomerIfPossible(nearestCustomer);
+		boolean insered = r1.addCustomer(nearestCustomer);
 		//System.out.println("E' stato inserito? "+insered);
 		
 		// se non viene inserito nella nuova strada, lo metto in una strada vergine
@@ -213,7 +291,7 @@ public class VRPTWSolverThread implements Runnable {
 		return newSolution;		
 	}
 	
-	protected static VRPTWSolution annealing_step_old(VRPTWSolution start_solution, double temperature) {
+	protected static VRPTWSolution annealing_step_old_old(VRPTWSolution start_solution, double temperature) {
 
 //		try {
 //			Thread.sleep(Math.round(Math.random()*10));
@@ -252,7 +330,7 @@ public class VRPTWSolverThread implements Runnable {
 		do {
 			indexOfR2 = new Long(Math.round(Math.random()*(newSolution.routes.size()-1))).intValue();
 			r2 = newSolution.routes.get(indexOfR2);
-			insered = r2.addCustomerIfPossible(c1);
+			insered = r2.addCustomer(c1);
 			attempt++;
 		} while (!insered && attempt<VRPTWParameters.insertion_attempt);
 		if (!insered) {
