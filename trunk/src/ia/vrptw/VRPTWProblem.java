@@ -28,7 +28,7 @@ public class VRPTWProblem {
 	 * 
 	 * @param name nome del file con i dati
 	 * @param vehicles numero di veicoli disponibili (max)
-	 * @param capacity capacitˆ dei veicoli (uguale per tutti i veicoli)
+	 * @param capacity capacitï¿½ dei veicoli (uguale per tutti i veicoli)
 	 */
 	public VRPTWProblem(String name, int vehicles, double capacity) {
 		instance_name = name;

@@ -2,6 +2,8 @@ package ia.vrptw;
 
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 
@@ -50,9 +52,8 @@ public class VRPTWSolver {
 		VRPTWSolution finalSolution = generateFirstSolution(problem);
 		System.out.println("Soluzione di partenza: costo " + finalSolution.cost() + " con " + finalSolution.routes.size() + " mezzi");
 		//finalSolution.show();
-		
 		LinkedList<VRPTWSolution> solutions = new LinkedList<VRPTWSolution>();
-		
+
 		// istanzio i thread paralleli
 		threads = new VRPTWSolverThread[_processors];
 		CyclicBarrier _start_barrier = new CyclicBarrier(_processors+1);
@@ -106,7 +107,7 @@ public class VRPTWSolver {
 				}
 			}
 			
-			// controllo se è migliore di quella che avevo prima
+			// controllo se ÔøΩ migliore di quella che avevo prima
 			if (bestSolution.cost() < finalSolution.cost()) {
 				finalSolution = bestSolution;
 				equilibrium = 0;
@@ -129,34 +130,92 @@ public class VRPTWSolver {
 		return finalSolution;
 	}
 	
+	
+	// Genera una soluzione feasible secondo l'euristica di inserimento di Solomon (riempe le rotte scegliendo i customer e le posizioni di inserimento con approccio greedy).
+	// Ref. [Solomon - Algorithms for the vehicle routing and scheduling problems with time window constraints] 
 	private VRPTWSolution generateFirstSolution(VRPTWProblem problem)  {
-		// TODO da implementare seriamente
 		
 		VRPTWSolution solution = new VRPTWSolution(problem);
 		
-		int vehicle = 0;
 		VRPTWCustomer warehouse = null;
-		
-		LinkedList<VRPTWCustomer> customerToServe = new LinkedList<VRPTWCustomer>();
+	
+		LinkedList<VRPTWCustomer> customerToServe = new LinkedList<VRPTWCustomer>();	
 		for (VRPTWCustomer c : problem.customers) {
 			if (c.isWarehouse())
 				warehouse = c;
 			else
 				customerToServe.add(c);
 		}
+		
+		// Genera una nuova rotta
+		VRPTWRoute route = new VRPTWRoute(warehouse, problem.getVehicleCapacity());
+		while (!customerToServe.isEmpty()) {
+			// Cerca dei customer candidati all'inserimento
+			LinkedList<VRPTWCustomer> candidate_customers = route.candidate_customers(customerToServe);
+			LinkedList<VRPTWCandidateCustomerInsertion> candidate_insertions = new LinkedList<VRPTWCandidateCustomerInsertion>();
+			
+			// Per ogni customer candidato calcola potenziali inserimenti nella rotta corrente 
+			for (VRPTWCustomer c : candidate_customers) {
+				//LinkedList<VRPTWCandidateCustomerInsertion> ci = route.candidate_insertions(c);
+				candidate_insertions.addAll( route.candidate_insertions(c) );
+			}
+			Collections.sort(candidate_insertions);
+			
+			// Prova a fare gli inserimenti con incremento di costo minore
+			ListIterator<VRPTWCandidateCustomerInsertion> itr = candidate_insertions.listIterator();
+			VRPTWCandidateCustomerInsertion insertion = null;
+			boolean inserted = false;
+			
+			while (itr.hasNext() && !inserted) {
+				insertion = itr.next();
+				inserted = route.addCustomer(insertion.customer, insertion.prev_customer_idx, insertion.next_customer_idx);
+			}
+			
+			if (inserted) {
+				customerToServe.remove(insertion.customer);
+				if (debug) System.out.println("Cliente inserito: " + insertion.customer);
+			}
+			
+			// Se tutti gli inserimenti non sono fattibili nella rotta corrente passa alla nuova rotta
+			if ( !inserted || (route._capacity == 0)) {
+				solution.addRoute(route);
+				route = new VRPTWRoute(warehouse, problem.getVehicleCapacity());
+				if (debug) System.out.println("Generazione di una nuova rotta");			}
+		}
+		return solution;
+	}
+	
+	private VRPTWSolution generateFirstSolution_old(VRPTWProblem problem)  {
+		// TODO da implementare seriamente
+		
+		VRPTWSolution solution = new VRPTWSolution(problem);
+		
+		int vehicle = 0;
+		VRPTWCustomer warehouse = null;
+	
+		LinkedList<VRPTWCustomer> customerToServe = new LinkedList<VRPTWCustomer>();	
+		for (VRPTWCustomer c : problem.customers) {
+			if (c.isWarehouse())
+				warehouse = c;
+			else
+				customerToServe.add(c);
+		}	
 		Collections.sort(customerToServe, new VRPTWCustomerEndTimeWindowComparator());
-				
-		// finchè ci sono ancora clienti, bisogna servirli
+		
+		VRPTWCustomer prev_customer = warehouse;
+		// finchÔøΩ ci sono ancora clienti, bisogna servirli
 		VRPTWRoute route = new VRPTWRoute(warehouse, problem.getVehicleCapacity());
 		while (!customerToServe.isEmpty()) {
 			VRPTWCustomer customer = customerToServe.remove();
 			boolean capacity_test = route.getRemainCapacity()-customer._demand > 0; // ho ancora spazio nel camion per quello che il cliente di turno vuole
-			boolean timewindow_test = route.travelDistance() < customer._due_date; // ce la faccio a portarglielo dentro alla sua deadline
+			boolean timewindow_test = route.travelTime()+VRPTWUtils.distance(prev_customer, customer) < customer._due_date; // ce la faccio a portarglielo dentro alla sua deadline
 			if (!timewindow_test || !capacity_test) {
 				solution.addRoute(route);
 				route = new VRPTWRoute(warehouse, problem.getVehicleCapacity());
+				prev_customer = warehouse; // reset base di partenza		
 			}
 			route.addCustomer(customer);
+			prev_customer = customer;
 		}
 		if (route.size()>0) {
 			solution.addRoute(route);
