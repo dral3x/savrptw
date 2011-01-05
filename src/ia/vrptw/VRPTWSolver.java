@@ -25,7 +25,7 @@ public class VRPTWSolver {
 	 * Questa classe e' sostanzialmente P0 nel paper.
 	 */
 	public static void main(String[] args) throws InterruptedException {
-		VRPTWProblem problem = new VRPTWProblem("RC101", 50, 200);
+		VRPTWProblem problem = new VRPTWProblem("C101", 50, 200);
 		//problem.show();
 		VRPTWSolver solver = new VRPTWSolver(4); // processori
 		//solver.activateDebugMode();
@@ -195,7 +195,8 @@ public class VRPTWSolver {
 			if ( !inserted || (route._capacity == 0)) {
 				solution.addRoute(route);
 				route = new VRPTWRoute(warehouse, problem.getVehicleCapacity());
-				if (debug) System.out.println("Generazione di una nuova rotta");			}
+				if (debug) System.out.println("Generazione di una nuova rotta");			
+			}
 		}
 		return solution;
 	}

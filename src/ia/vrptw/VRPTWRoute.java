@@ -119,7 +119,7 @@ public class VRPTWRoute {
 		// Aggiorno _travel_distance, _capacity
 		_travel_distance += distance_prev_next - distance_prev_c - distance_c_next;
 		_capacity += customer._demand;
-		
+
 		// Rimuovo customer
 		customers.remove(customer);
 	}
