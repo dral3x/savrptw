@@ -44,7 +44,7 @@ public class VRPTWProblem {
 			DataInputStream in = new DataInputStream(fstream);
 			BufferedReader br = new BufferedReader(new InputStreamReader(in));
 			String strLine;
-			
+	
 			while ((strLine = br.readLine()) != null)   { // read file line by line
 				String[] data = strLine.split("\t");
 				VRPTWCustomer customer = new VRPTWCustomer(Integer.parseInt(data[0]), Double.parseDouble(data[1]), Double.parseDouble(data[2]), Double.parseDouble(data[3]), Double.parseDouble(data[4]), Double.parseDouble(data[5]), Double.parseDouble(data[6]));

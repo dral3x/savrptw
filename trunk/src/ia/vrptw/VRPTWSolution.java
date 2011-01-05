@@ -48,7 +48,7 @@ public class VRPTWSolution {
 
 		return d + VRPTWParameters.sigma*(c*n + e_min);
 	}
-
+	
 	public void show() { 
 		// Problem instance: RC104. Distance: 1135.48. Vehicles: 10.
 		// route 1: 86 64 90 77 85 52 65 84 67;
@@ -89,4 +89,14 @@ public class VRPTWSolution {
 		return clone;
 	}
 	
+	// (funzione con finalità di test)
+	public int customers_size() {
+		int tot_cust = 0;
+		for (VRPTWRoute r : routes) {
+			if (r.customers.size() > 2)
+				tot_cust += r.customers.size() - 2;
+		}
+		return tot_cust;
+	}
+
 }

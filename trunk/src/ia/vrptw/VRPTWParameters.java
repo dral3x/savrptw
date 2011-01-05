@@ -3,7 +3,7 @@ package ia.vrptw;
 public class VRPTWParameters {
 
 	// numero di cicli non migliorativi prima di terminare tutto
-	static final int tau = 20; // 20 - 40 
+	static final int tau = 30; // 20 - 40 
 
 	// costante per pesare il costo dovuto al numero di rotte rispetto al costo dovuto alla distanza percorsa
 	// sigma*(c*n + e_min) >> d
