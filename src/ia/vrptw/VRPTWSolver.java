@@ -1,10 +1,15 @@
 package ia.vrptw;
 
+import ia.vrptw.VRPTWDrawingSolution.DrawingArea;
+
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
+
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 
 /**
  * @author Alessandro Calzavara
@@ -25,9 +30,25 @@ public class VRPTWSolver {
 		VRPTWSolver solver = new VRPTWSolver(4); // processori
 		//solver.activateDebugMode();
 		System.out.println("* inizio ottimizzazione *");
-		VRPTWSolution solution = solver.resolve(problem);
+		final VRPTWSolution solution = solver.resolve(problem);
 		System.out.println("* ottimizzazione terminata *");
 		solution.show();
+		
+		// stampa grafica
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				
+				DrawingArea drawingArea = new DrawingArea(solution);
+				
+				JFrame.setDefaultLookAndFeelDecorated(true);
+				JFrame frame = new JFrame("Solution");
+				frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
+				frame.getContentPane().add(drawingArea);
+				frame.setSize(800, 600);
+				frame.setLocationRelativeTo( null );
+				frame.setVisible(true);
+			}
+		});
 	}
 
 	private VRPTWSolverThread[] threads;
@@ -130,7 +151,7 @@ public class VRPTWSolver {
 	
 	// Genera una soluzione feasible secondo l'euristica di inserimento di Solomon (riempe le rotte scegliendo i customer e le posizioni di inserimento con approccio greedy).
 	// Ref. [Solomon - Algorithms for the vehicle routing and scheduling problems with time window constraints] 
-	private VRPTWSolution generateFirstSolution(VRPTWProblem problem)  {
+	protected VRPTWSolution generateFirstSolution(VRPTWProblem problem)  {
 		
 		VRPTWSolution solution = new VRPTWSolution(problem);
 		VRPTWCustomer warehouse = problem.getWarehouse();

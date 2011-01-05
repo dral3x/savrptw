@@ -88,5 +88,5 @@ public class VRPTWSolution {
 
 		return clone;
 	}
-
+	
 }
