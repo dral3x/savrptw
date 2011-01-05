@@ -82,7 +82,7 @@ public class VRPTWCustomer {
 	}
 	
 	public double getCompletedTime() {
-		return _arrival_time+_service_time;
+		return getActualStart()+_service_time;
 	}
 	
 	public double minimumDistanceToRoute(VRPTWRoute route) {
