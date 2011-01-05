@@ -8,7 +8,7 @@ import java.util.concurrent.CyclicBarrier;
 
 public class VRPTWSolverThread implements Runnable {
 	
-	boolean debug = false;
+	static boolean debug = false;
 	
 	int _id;
 	boolean go;
@@ -20,13 +20,14 @@ public class VRPTWSolverThread implements Runnable {
 	LinkedList<VRPTWSolution> _solutions;
 	CyclicBarrier _start_barrier;
 	CyclicBarrier _done_barrier;
+	CyclicBarrier _cooperate;
 	
-	VRPTWSolverThread _coworker;
+	VRPTWSolverThread _coworker_prev, _coworker_next;
 	
 	double initial_temperature;
 	int customers;
 	
-	public VRPTWSolverThread(int id, VRPTWProblem problem, VRPTWSolution solution, LinkedList<VRPTWSolution> solutions, CyclicBarrier start, CyclicBarrier done) {
+	public VRPTWSolverThread(int id, VRPTWProblem problem, VRPTWSolution solution, LinkedList<VRPTWSolution> solutions, CyclicBarrier start, CyclicBarrier done, CyclicBarrier cooperate) {
 		_id = id;
 		_old_solution = solution;
 		_best_local_solution = solution;
@@ -35,6 +36,7 @@ public class VRPTWSolverThread implements Runnable {
 		
 		_start_barrier = start;
 		_done_barrier = done;
+		_cooperate = cooperate;
 		
 		initial_temperature = VRPTWParameters.gamma * _old_solution.cost();
 		customers = problem.getNumberOfCustomers();
@@ -47,8 +49,12 @@ public class VRPTWSolverThread implements Runnable {
 		debug = true;
 	}
 	
-	public void setCoWorker(VRPTWSolverThread socio) {
-		_coworker = socio;
+	public void setCoWorkerPrev(VRPTWSolverThread socio) {
+		_coworker_prev = socio;
+	}
+	
+	public void setCoWorkerNext(VRPTWSolverThread socio) {
+		_coworker_next = socio;
 	}
 	
 	public void setCoWorkerSolution(VRPTWSolution another_solution) {
@@ -90,46 +96,74 @@ public class VRPTWSolverThread implements Runnable {
 			// faccio n iterazioni, confronto la mia soluzione con quella del collega e ciclo
 			// avanti cos� fino a n^2 spostamenti, dopo i quali consegno la soluzione al "capo"
 			for (int iteration=0; iteration < customers*customers; iteration++ ) {
-				//if (debug) System.out.println("thread-"+_id+" iterazione "+iteration);
+
 				_best_local_solution = annealing_step(_best_local_solution, temperature);
 
 				// ogni n iterazioni (n = numero di clienti) coopero col "vicino"
-				if (_coworker != null && iteration % customers == customers-1) { // co-operate
-					if (debug) System.out.println("thread-"+_id+" consegno al collega "+_coworker.getID()+" la mia soluzione");
-					synchronized(_coworker) {
-						_coworker.setCoWorkerSolution(_best_local_solution);
-						_coworker.notify();
-					}
-
-					synchronized(this) {
-						while (_coworker_solution == null) {
-							try {
-								if (debug) System.out.println("thread-"+_id+" attendo il collega "+_coworker.getID());
-								this.wait();
-							} catch (InterruptedException e) {
-								go = false;
-								break;
+				if ( ( (_coworker_next != null) || (_coworker_prev != null) ) &&  iteration % customers == customers-1) {
+					if (_id == 0) {
+						// Attende gli altri thread per cooperare
+						try {
+							_cooperate.await();
+							_cooperate.reset();
+						} catch (BrokenBarrierException e) {
+							go = false;
+						} catch (InterruptedException e) {
+							go = false;
+						}
+						
+						// thread-0 invia il proprio risultato a thread-1
+						if (debug) System.out.println("thread-"+_id+" consegno al collega "+_coworker_next.getID()+" la mia soluzione");
+						synchronized(_coworker_next) {
+							_coworker_next.setCoWorkerSolution(_best_local_solution);
+							_coworker_next.notify();
+						}
+					} else {
+						// Attende gli altri thread per cooperare
+						try {
+							_cooperate.await();
+						} catch (BrokenBarrierException e) {
+							go = false;
+						} catch (InterruptedException e) {
+							go = false;
+						}
+						
+						// Attente la soluzione dal processore precedente
+						synchronized(this) {
+							while (_coworker_solution == null) {
+								try {
+									if (debug) System.out.println("thread-"+_id+" attendo il collega "+_coworker_prev.getID());
+									this.wait();
+								} catch (InterruptedException e) {
+									go = false;
+									break;
+								}
 							}
 						}
-					}
-
-
-					// prendo la solutione del vicino se � migliore della  mia
-					if (debug) System.out.println("thread-"+_id+" controllo solutione arrivata dal collega "+_coworker.getID());
-					if (_coworker_solution.cost() < _best_local_solution.cost()) {
-						_best_local_solution = _coworker_solution;
+						// Soluzione ricevuta
+						// Prendo la solutione del vicino se e' migliore della mia
+						if (debug) System.out.println("thread-"+_id+" controllo solutione arrivata dal collega "+_coworker_prev.getID());
+						if (_coworker_solution.cost() < _best_local_solution.cost()) {
+							_best_local_solution = _coworker_solution.clone();	//FIXME clone() non penso serva
+						}
+						// Inoltro la soluzione migliore al processore successivo
+						if (_coworker_next != null) {
+							if (debug) System.out.println("thread-"+_id+" consegno al collega "+_coworker_next.getID()+" la soluzione migliore");
+							synchronized(_coworker_next) {
+								_coworker_next.setCoWorkerSolution(_best_local_solution);
+								_coworker_next.notify();
+							}
+						}
 					}
 					_coworker_solution = null;
 				}
 			}
 			
 			// consegna la soluzione trovata
-			if (debug) System.out.println("thread-"+_id+" consegna soluzione best_local");
+			if (debug) System.out.println("thread-"+_id+" consegna soluzione best_local al thread supervisore");
 			synchronized(_solutions) {
 				_solutions.add(_best_local_solution);
-				//_best_local_solution.show();
 			}
-		
 			
 			try {
 				// attendo che tutti i thread consegnino la loro soluzione
@@ -157,7 +191,6 @@ public class VRPTWSolverThread implements Runnable {
 		// scelgo la route da allungare
 		int indexOfFirstRoute = new Long(Math.round(Math.random()*(newSolution.routes.size()-1))).intValue();
 		VRPTWRoute r1 = newSolution.routes.get(indexOfFirstRoute);
-		//System.out.println("scelto route: "+r1);
 		
 		// prendo il cliente pi� vicino alla route selezionata
 		LinkedList<VRPTWCustomer> externalCustomers = new LinkedList<VRPTWCustomer>();
@@ -171,7 +204,6 @@ public class VRPTWSolverThread implements Runnable {
 		}
 		Collections.sort(externalCustomers, new VRPTWCustomerNearestToRouteComparator(r1));
 		VRPTWCustomer nearestCustomer = externalCustomers.remove();;
-		//System.out.println("il customer pi� vicino � "+nearestCustomer);
 		
 		// lo rimuovo dalla sua strada originale
 		for (VRPTWRoute r : newSolution.routes) {
@@ -179,12 +211,12 @@ public class VRPTWSolverThread implements Runnable {
 				r.removeCustomer(nearestCustomer);
 				if (r.travelDistance() < 0.0001) { // se era un cliente solitario, rimuovo la ruote vuota
 					newSolution.removeRoute(r);
-					System.out.println("Rimozione di rotta <------");
+					if (debug) System.out.println("Rimozione di rotta <------");
 				}
 				break;
 			}
 		}
-		
+
 		// Calcola potenziali inserimenti nella rotta corrente 
 		LinkedList<VRPTWCandidateCustomerInsertion> candidate_insertions = r1.candidate_insertions(nearestCustomer);
 		Collections.sort(candidate_insertions);
@@ -205,25 +237,23 @@ public class VRPTWSolverThread implements Runnable {
 			VRPTWRoute route = new VRPTWRoute(r1._warehouse, r1._initial_capacity);
 			route.addCustomer(nearestCustomer);
 			newSolution.addRoute(route);
-			System.out.println("Generazione di una nuova rotta <------");
+			if (debug) System.out.println("Generazione di una nuova rotta <------");
 		}
 		
 		// controllo se ho migliorato o meno		
 		double cost_new = newSolution.cost();
 		double cost_old = start_solution.cost();
 		if (cost_new > cost_old) {
-			System.out.print("thread: soluzione peggiore di quella di partenza: costo " + newSolution.cost() + " con " + newSolution.routes.size() + " mezzi");
+			if (debug) System.out.print("thread: soluzione peggiore di quella di partenza: costo " + Math.round(newSolution.cost()) + " con " + newSolution.routes.size() + " mezzi");
 			if (Math.random() < (temperature/(temperature + VRPTWParameters.delta))) {
-				System.out.println(" accettata comunque (T=" + temperature + ")");
+				if (debug) System.out.println(" accettata comunque (T=" + Math.round(temperature) + ")");
 			} else {
 				// rifiuto la nuova soluzione, torno alla vecchia
 				newSolution = start_solution;
-				System.out.println(" rifiutata");
+				if (debug) System.out.println(" rifiutata");
 			}
-		} else {
-			System.out.println("thread: soluzione migliore di quella di partenza: costo " + newSolution.cost() + " con " + newSolution.routes.size() + " mezzi");
-		}
-
+		} else
+			if (debug) System.out.println("thread: soluzione migliore di quella di partenza: costo " + Math.round(newSolution.cost()) + " con " + newSolution.routes.size() + " mezzi");
 		
 		return newSolution;		
 	}
@@ -291,63 +321,4 @@ public class VRPTWSolverThread implements Runnable {
 		return newSolution;		
 	}
 	
-	protected static VRPTWSolution annealing_step_old_old(VRPTWSolution start_solution, double temperature) {
-
-//		try {
-//			Thread.sleep(Math.round(Math.random()*10));
-//		} catch (InterruptedException e) { }
-
-		
-		VRPTWSolution newSolution = start_solution.clone();
-		
-		// On every step a neighbor solution is determined by either mov-
-		// ing the best customer from one route to the best place (in
-		// terms of the solution cost) of another route (perhaps empty) or
-		// by selecting the best customer and moving it to the best place
-		// within its route. All the routes mentioned above are
-		// chosen randomly.
-		// The neighbor solutions of lower costs obtained
-		// in this way are always accepted. The solutions of higher costs
-		// are accepted with the probability
-		// T_i / (T_i + delta)
-		
-		// sceglo il cliente da spostare
-		VRPTWRoute r1 = newSolution.routes.get(new Long(Math.round(Math.random()*(newSolution.routes.size()-1))).intValue());
-		int indexOfBestClient = new Long(Math.round(Math.random()*(r1.customers.size()-1))).intValue();
-		VRPTWCustomer c1 = r1.customers.get(indexOfBestClient);
-		r1.removeCustomer(c1);
-		if (r1.travelDistance() < 0.0001) {
-			newSolution.removeRoute(r1);
-		}
-
-		// scelto la destinazione
-		VRPTWRoute r2 = null;
-		int indexOfR2 = -1;
-
-		// sposto il miglior cliente dalla prima alla seconda strada
-		boolean insered = false;
-		int attempt = 0;
-		do {
-			indexOfR2 = new Long(Math.round(Math.random()*(newSolution.routes.size()-1))).intValue();
-			r2 = newSolution.routes.get(indexOfR2);
-			insered = r2.addCustomer(c1);
-			attempt++;
-		} while (!insered && attempt<VRPTWParameters.insertion_attempt);
-		if (!insered) {
-			
-			r2 = new VRPTWRoute(r2._warehouse, r2._initial_capacity);
-			r2.addCustomer(c1);
-			newSolution.addRoute(r2);
-		}
-		
-		// controllo se ho migliorato o meno		
-		double cost_new = newSolution.cost();
-		double cost_old = start_solution.cost();
-		if (cost_old < cost_new && (Math.random()*(temperature/(temperature + VRPTWParameters.delta)) < 0.5)) {
-			// rifiuto la nuova soluzione pi� cara della vecchia
-			newSolution = start_solution;
-		}
-		
-		return newSolution;
-	}
 }

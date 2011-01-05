@@ -80,7 +80,8 @@ public class VRPTWSolution {
 		for (VRPTWRoute route : routes) {
 			VRPTWRoute newRoute = new VRPTWRoute(_problem.getWarehouse(), _problem.getVehicleCapacity());
 			for (VRPTWCustomer customer : route.customers) {
-				newRoute.addCustomer(customer);
+				if (!customer.isWarehouse())
+					newRoute.addCustomer(customer.clone());
 			}
 			clone.addRoute(newRoute);
 		}
