@@ -59,13 +59,25 @@ public class VRPTWSolution {
 			km += r._travel_distance;
 
 		System.out.println("Problem instance: "+_instance_name + ". Distance: "+km+ ". Vehicles: "+routes.size()+".");
+	}
+
+	public void showAll() { 
+		// Problem instance: RC104. Distance: 1135.48. Vehicles: 10.
+		// route 1: 86 64 90 77 85 52 65 84 67;
+		// route 2: 23 21 50 20 24 22 49 19 26 25;
+
+		double km = 0.0;
+		for (VRPTWRoute r : routes)
+			km += r._travel_distance;
+
+		System.out.println("Problem instance: "+_instance_name + ". Distance: "+km+ ". Vehicles: "+routes.size()+".");
 
 		for (int i=0; i<routes.size(); i++) {
 			System.out.print("route "+(i+1)+": ");
 			routes.get(i).show();
 		}
 	}
-
+	
 	public void addRoute(VRPTWRoute route) {
 		routes.add(route);
 	}
