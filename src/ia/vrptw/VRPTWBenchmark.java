@@ -48,7 +48,7 @@ public class VRPTWBenchmark {
     		new VRPTWProblem("RC108", 50, 200)
     };
     
-    for (VRPTWProblem p : r1_problems) {
+    for (VRPTWProblem p : rc1_problems) {
     	VRPTWSolver solver = new VRPTWSolver(4); // processori
     	System.out.println("<< INIZIO OTTIMIZZAZIONE >> ");
     	VRPTWSolution solution = solver.resolve(p);

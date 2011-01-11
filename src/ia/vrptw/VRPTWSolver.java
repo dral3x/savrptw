@@ -2,12 +2,17 @@ package ia.vrptw;
 
 import ia.vrptw.VRPTWDrawingSolution.DrawingArea;
 
+import java.awt.Graphics;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 
+import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
@@ -20,6 +25,9 @@ import javax.swing.SwingUtilities;
  */
 public class VRPTWSolver {
 
+	String filename = "frames/SoluzioneParziale_";
+	String estensione = ".png";
+	int progressivo = 0;
 	/*
 	 * Main per avviare il solver sul problema specificato.
 	 * Questa classe e' sostanzialmente P0 nel paper.
@@ -28,27 +36,27 @@ public class VRPTWSolver {
 		VRPTWProblem problem = new VRPTWProblem("C104", 50, 200);
 		//problem.show();
 		VRPTWSolver solver = new VRPTWSolver(4); // processori
-		solver.activateDebugMode();
+		//solver.activateDebugMode();
 		System.out.println("* inizio ottimizzazione *");
 		final VRPTWSolution solution = solver.resolve(problem);
 		System.out.println("* ottimizzazione terminata *");
 		solution.show();
 		
 		// stampa grafica
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				
-				DrawingArea drawingArea = new DrawingArea(solution);
-				
-				JFrame.setDefaultLookAndFeelDecorated(true);
-				JFrame frame = new JFrame("Solution");
-				frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
-				frame.getContentPane().add(drawingArea);
-				frame.setSize(800, 600);
-				frame.setLocationRelativeTo( null );
-				frame.setVisible(true);
-			}
-		});
+//		SwingUtilities.invokeLater(new Runnable() {
+//			public void run() {
+//				
+//				DrawingArea drawingArea = new DrawingArea(solution);
+//				
+//				JFrame.setDefaultLookAndFeelDecorated(true);
+//				JFrame frame = new JFrame("Solution");
+//				frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
+//				frame.getContentPane().add(drawingArea);
+//				frame.setSize(800, 600);
+//				frame.setLocationRelativeTo( null );
+//				frame.setVisible(true);
+//			}
+//		});
 	}
 
 	private VRPTWSolverThread[] threads;
@@ -122,6 +130,7 @@ public class VRPTWSolver {
 				if (s.cost()<bestSolution.cost()) {
 					bestSolution = s;
 				}
+				
 			}
 			
 			// controllo se � migliore di quella che avevo prima
@@ -133,6 +142,10 @@ public class VRPTWSolver {
 				System.out.println("Nessun miglioramento (" + equilibrium + ")");
 				equilibrium ++;
 			}
+			
+			// stampa la soluzione su file
+			printSolution(bestSolution, filename + (progressivo) + estensione);
+			progressivo++;
 			
 		}
 
@@ -242,6 +255,42 @@ public class VRPTWSolver {
 
 	public void activateDebugMode() {
 		debug = true;
+	}
+	
+	public void printSolution(VRPTWSolution s, String f) {
+		final String filename = f;
+		final VRPTWSolution solution = s;
+		
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				
+				DrawingArea drawingArea = new DrawingArea(solution);
+				
+				JFrame.setDefaultLookAndFeelDecorated(true);
+				JFrame frame = new JFrame("Solution");
+				frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
+				frame.getContentPane().add(drawingArea);
+				frame.setSize(1024, 768);
+				frame.setLocationRelativeTo( null );
+				frame.setVisible(true);
+				
+				// salvo lo screenshot come png
+				BufferedImage awtImage = new BufferedImage(drawingArea.getWidth(), drawingArea.getHeight(), BufferedImage.TYPE_INT_RGB);
+				
+				Graphics g = awtImage.getGraphics();
+				drawingArea.printAll(g);
+				
+				File file = new File(filename);
+				try {
+					ImageIO.write(awtImage, "png", file);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				frame.dispose();
+			}
+		});	
 	}
 
 }
