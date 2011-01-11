@@ -25,10 +25,10 @@ public class VRPTWSolver {
 	 * Questa classe e' sostanzialmente P0 nel paper.
 	 */
 	public static void main(String[] args) throws InterruptedException {
-		VRPTWProblem problem = new VRPTWProblem("C101", 50, 200);
+		VRPTWProblem problem = new VRPTWProblem("C104", 50, 200);
 		//problem.show();
 		VRPTWSolver solver = new VRPTWSolver(4); // processori
-		//solver.activateDebugMode();
+		solver.activateDebugMode();
 		System.out.println("* inizio ottimizzazione *");
 		final VRPTWSolution solution = solver.resolve(problem);
 		System.out.println("* ottimizzazione terminata *");
@@ -66,8 +66,8 @@ public class VRPTWSolver {
 	public VRPTWSolution resolve(VRPTWProblem problem) throws InterruptedException {
 		// scelgo una soluzione da cui partire (generata tramite una euristica)
 		VRPTWSolution finalSolution = generateFirstSolution(problem);
-
-		System.out.println("Soluzione di partenza: costo " + finalSolution.cost() + " con " + finalSolution.routes.size() + " mezzi");
+		
+		System.out.println("Soluzione di partenza: costo " + finalSolution.cost() + " (km = "+finalSolution.totalTravelDistance()+", mezzi = " + finalSolution.routes.size() + ")");
 		LinkedList<VRPTWSolution> solutions = new LinkedList<VRPTWSolution>();
 
 		// istanzio i thread paralleli
@@ -128,7 +128,7 @@ public class VRPTWSolver {
 			if (bestSolution.cost() < finalSolution.cost()) {
 				finalSolution = bestSolution;
 				equilibrium = 0;
-				System.out.println("Trovata soluzione migliore ... costo " + finalSolution.cost() + " con " + finalSolution.routes.size() + " mezzi");
+				System.out.println("Trovata soluzione migliore ... costo " + finalSolution.cost() + " (km = "+finalSolution.totalTravelDistance()+", mezzi = " + finalSolution.routes.size() + ")");
 			} else {
 				System.out.println("Nessun miglioramento (" + equilibrium + ")");
 				equilibrium ++;

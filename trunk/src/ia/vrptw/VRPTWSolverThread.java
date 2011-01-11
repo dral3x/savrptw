@@ -99,7 +99,7 @@ public class VRPTWSolverThread implements Runnable {
 			// avanti cos� fino a n^2 spostamenti, dopo i quali consegno la soluzione al "capo"
 			for (int iteration=0; iteration < customers*customers; iteration++ ) {
 
-				_best_local_solution = annealing_step(_best_local_solution, temperature);
+				_best_local_solution = annealing_step(_best_local_solution, temperature, initial_temperature);
 
 				// ogni n iterazioni (n = numero di clienti) coopero col "vicino"
 				if ( ( (_coworker_next != null) || (_coworker_prev != null) ) &&  iteration % customers == customers-1) {
@@ -187,7 +187,7 @@ public class VRPTWSolverThread implements Runnable {
 	}
 	
 	
-	protected static VRPTWSolution annealing_step(VRPTWSolution start_solution, double temperature) {
+	protected static VRPTWSolution annealing_step(VRPTWSolution start_solution, double temperature, double initial_temperature) {
 		VRPTWSolution newSolution = start_solution.clone();
 	
 		// prendo un cliente a caso da una rotta a caso
@@ -229,7 +229,7 @@ public class VRPTWSolverThread implements Runnable {
 			double cost_old = start_solution.cost();
 			if (cost_new > cost_old) {
 				if (debug) System.out.print("thread: soluzione peggiore di quella di partenza: costo " + Math.round(newSolution.cost()) + " con " + newSolution.routes.size() + " mezzi");
-				if (Math.random() < (temperature/(temperature + VRPTWParameters.delta))) {
+				if (Math.random() < (temperature/(temperature + initial_temperature*VRPTWParameters.delta))) {
 					if (debug) System.out.println(" accettata comunque (T=" + Math.round(temperature) + ")");
 				} else {
 					// rifiuto la nuova soluzione, torno alla vecchia
