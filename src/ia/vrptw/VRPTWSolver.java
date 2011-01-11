@@ -33,30 +33,14 @@ public class VRPTWSolver {
 	 * Questa classe e' sostanzialmente P0 nel paper.
 	 */
 	public static void main(String[] args) throws InterruptedException {
-		VRPTWProblem problem = new VRPTWProblem("C104", 50, 200);
+		VRPTWProblem problem = new VRPTWProblem("C101", 50, 200);
 		//problem.show();
 		VRPTWSolver solver = new VRPTWSolver(4); // processori
 		//solver.activateDebugMode();
 		System.out.println("* inizio ottimizzazione *");
 		final VRPTWSolution solution = solver.resolve(problem);
 		System.out.println("* ottimizzazione terminata *");
-		solution.show();
-		
-		// stampa grafica
-//		SwingUtilities.invokeLater(new Runnable() {
-//			public void run() {
-//				
-//				DrawingArea drawingArea = new DrawingArea(solution);
-//				
-//				JFrame.setDefaultLookAndFeelDecorated(true);
-//				JFrame frame = new JFrame("Solution");
-//				frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
-//				frame.getContentPane().add(drawingArea);
-//				frame.setSize(800, 600);
-//				frame.setLocationRelativeTo( null );
-//				frame.setVisible(true);
-//			}
-//		});
+		solution.showAll();
 	}
 
 	private VRPTWSolverThread[] threads;
@@ -73,11 +57,16 @@ public class VRPTWSolver {
 	
 	public VRPTWSolution resolve(VRPTWProblem problem) throws InterruptedException {
 		// scelgo una soluzione da cui partire (generata tramite una euristica)
-		VRPTWSolution finalSolution = generateFirstSolution(problem);
+		VRPTWSolution initialSolution = generateFirstSolution(problem);
+		VRPTWSolution finalSolution = initialSolution;
 		
 		System.out.println("Soluzione di partenza: costo " + finalSolution.cost() + " (km = "+finalSolution.totalTravelDistance()+", mezzi = " + finalSolution.routes.size() + ")");
 		LinkedList<VRPTWSolution> solutions = new LinkedList<VRPTWSolution>();
 
+		// stampo anche la soluzione iniziale
+		printSolution(finalSolution, initialSolution , filename + (progressivo) + estensione);
+		progressivo++;
+		
 		// istanzio i thread paralleli
 		threads = new VRPTWSolverThread[_processors];
 		CyclicBarrier _start_barrier = new CyclicBarrier(_processors+1);
@@ -144,7 +133,7 @@ public class VRPTWSolver {
 			}
 			
 			// stampa la soluzione su file
-			printSolution(bestSolution, filename + (progressivo) + estensione);
+			printSolution(finalSolution, initialSolution , filename + (progressivo) + estensione);
 			progressivo++;
 			
 		}
@@ -257,14 +246,15 @@ public class VRPTWSolver {
 		debug = true;
 	}
 	
-	public void printSolution(VRPTWSolution s, String f) {
+	public void printSolution(VRPTWSolution s, VRPTWSolution is, String f) {
 		final String filename = f;
 		final VRPTWSolution solution = s;
+		final VRPTWSolution initial_solution = is;
 		
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				
-				DrawingArea drawingArea = new DrawingArea(solution);
+				DrawingArea drawingArea = new DrawingArea(solution, initial_solution);
 				
 				JFrame.setDefaultLookAndFeelDecorated(true);
 				JFrame frame = new JFrame("Solution");
