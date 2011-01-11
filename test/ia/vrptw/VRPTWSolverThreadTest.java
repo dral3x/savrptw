@@ -61,7 +61,7 @@ public class VRPTWSolverThreadTest {
 		
 		replay(problem);
 		
-		VRPTWSolution after = VRPTWSolverThread.annealing_step(before, 1000);
+		VRPTWSolution after = VRPTWSolverThread.annealing_step(before, 1000, 2000);
 		after.show();
 		
 		assertEquals("soluzione non corretta", expected, after);
