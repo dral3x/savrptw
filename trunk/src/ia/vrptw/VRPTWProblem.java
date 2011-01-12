@@ -20,6 +20,8 @@ public class VRPTWProblem {
 	double distance;
 	int maxVehicles;
 	double vehicleCapacity; // Q
+	double bestDistance;
+	int bestVehicles;
 
 	LinkedList<VRPTWCustomer> customers;
 	
@@ -34,6 +36,8 @@ public class VRPTWProblem {
 		instance_name = name;
 		maxVehicles = vehicles;
 		vehicleCapacity = capacity;
+		bestDistance = 0;
+		bestVehicles = 0;
 		
 		// init customers from file "instance_name"
 		customers = new LinkedList<VRPTWCustomer>();
@@ -47,8 +51,14 @@ public class VRPTWProblem {
 	
 			while ((strLine = br.readLine()) != null)   { // read file line by line
 				String[] data = strLine.split("\t");
-				VRPTWCustomer customer = new VRPTWCustomer(Integer.parseInt(data[0]), Double.parseDouble(data[1]), Double.parseDouble(data[2]), Double.parseDouble(data[3]), Double.parseDouble(data[4]), Double.parseDouble(data[5]), Double.parseDouble(data[6]));
-				customers.add(customer);
+				if (data[0].equals("Best")){
+					bestDistance = Double.parseDouble(data[1]);
+					bestVehicles = Integer.parseInt(data[2]);
+				} else 
+				{
+					VRPTWCustomer customer = new VRPTWCustomer(Integer.parseInt(data[0]), Double.parseDouble(data[1]), Double.parseDouble(data[2]), Double.parseDouble(data[3]), Double.parseDouble(data[4]), Double.parseDouble(data[5]), Double.parseDouble(data[6]));
+					customers.add(customer);
+				}
 			}
 			in.close(); //Close the input stream
 		} catch (Exception e){//Catch exception if any
@@ -88,6 +98,15 @@ public class VRPTWProblem {
 	public double getVehicleCapacity() {
 		return vehicleCapacity;
 	}
+	
+	public int getCurrentBestVehicles() {
+		return bestVehicles;
+	}
+	
+	public double getCurrentBestDistance() {
+		return bestDistance;
+	}
+	
 	public VRPTWCustomer getWarehouse() {
 		return customers.element();
 	}

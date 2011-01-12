@@ -10,7 +10,9 @@ package ia.vrptw;
 public class VRPTWBenchmark {
 
   public static void main(String[] args) throws InterruptedException {
+
     VRPTWProblem c1_problems[] = {
+
     		new VRPTWProblem("C101", 50, 200),
     		new VRPTWProblem("C102", 50, 200),
     		new VRPTWProblem("C103", 50, 200),
