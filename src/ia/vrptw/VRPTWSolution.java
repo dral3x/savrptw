@@ -30,7 +30,6 @@ public class VRPTWSolution {
 	public double totalTravelDistance() {
 		double _cost = 0;
 		for(int r=0; r<routes.size(); r++) {
-			//_cost += routes.get(r).travelDistance(_problem);
 			_cost += routes.get(r).travelDistance();
 		}
 		return _cost;
@@ -45,14 +44,12 @@ public class VRPTWSolution {
 		for (VRPTWRoute r : routes) {
 			if (r.size() < e_min) e_min = r.size();
 		}
-
 		return d + VRPTWParameters.sigma*(c*n + e_min);
+//		return d + VRPTWParameters.sigma*(c*n);
 	}
 	
 	public void show() { 
 		// Problem instance: RC104. Distance: 1135.48. Vehicles: 10.
-		// route 1: 86 64 90 77 85 52 65 84 67;
-		// route 2: 23 21 50 20 24 22 49 19 26 25;
 
 		double km = getDistance();
 

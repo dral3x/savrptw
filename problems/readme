@@ -23,3 +23,12 @@ CUST NO.   XCOORD.   YCOORD.    DEMAND   READY TIME   DUE DATE   SERVICE TIME
     3      35.00      17.00       7.00      50.00      60.00      10.00
     4      55.00      45.00      13.00     116.00     126.00      10.00
     5      55.00      20.00      19.00     149.00     159.00      10.00
+    
+    
+********************************
+
+Fonte per i record
+http://www.sintef.no/Projectweb/TOP/Problems/VRPTW/Solomon-benchmark/100-customers/
+
+Fonte per i problemi
+http://web.cba.neu.edu/~msolomon/problems.htm

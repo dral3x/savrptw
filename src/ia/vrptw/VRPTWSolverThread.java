@@ -15,6 +15,7 @@ public class VRPTWSolverThread implements Runnable {
 	int _id;
 	boolean go;
 	VRPTWSolution _best_local_solution;
+	VRPTWSolution _previous_local_solution;
 	VRPTWSolution _coworker_solution;
 	VRPTWSolution _old_solution;
 	VRPTWProblem _problem;
@@ -99,8 +100,24 @@ public class VRPTWSolverThread implements Runnable {
 			// avanti cos� fino a n^2 spostamenti, dopo i quali consegno la soluzione al "capo"
 			for (int iteration=0; iteration < customers*customers; iteration++ ) {
 
-				_best_local_solution = annealing_step(_best_local_solution, temperature, initial_temperature);
+				_previous_local_solution = _best_local_solution;
+				_best_local_solution = annealing_step(_previous_local_solution);
 
+				// controllo se ho migliorato o meno		
+				double cost_new = _best_local_solution.cost();
+				double cost_old = _previous_local_solution.cost();
+				if (cost_new > cost_old) {
+					if (debug) System.out.print("thread: soluzione peggiore di quella di partenza: costo " + Math.round(_best_local_solution.cost()) + " con " + _best_local_solution.routes.size() + " mezzi");
+					if (Math.random() < (temperature/(temperature + initial_temperature*VRPTWParameters.delta))) {
+						if (debug) System.out.println(" accettata comunque (T=" + Math.round(temperature) + ")");
+					} else {
+						// rifiuto la nuova soluzione, torno alla vecchia
+						_best_local_solution = _previous_local_solution;
+						if (debug) System.out.println(" rifiutata");
+					}
+				} else
+					if (debug) System.out.println("thread: soluzione migliore di quella di partenza: costo " + Math.round(_best_local_solution.cost()) + " con " + _best_local_solution.routes.size() + " mezzi");
+				
 				// ogni n iterazioni (n = numero di clienti) coopero col "vicino"
 				if ( ( (_coworker_next != null) || (_coworker_prev != null) ) &&  iteration % customers == customers-1) {
 					if (_id == 0) {
@@ -142,6 +159,7 @@ public class VRPTWSolverThread implements Runnable {
 								}
 							}
 						}
+						
 						// Soluzione ricevuta
 						// Prendo la solutione del vicino se e' migliore della mia
 						if (debug) System.out.println("thread-"+_id+" controllo solutione arrivata dal collega "+_coworker_prev.getID());
@@ -187,7 +205,7 @@ public class VRPTWSolverThread implements Runnable {
 	}
 	
 	
-	protected static VRPTWSolution annealing_step(VRPTWSolution start_solution, double temperature, double initial_temperature) {
+	protected static VRPTWSolution annealing_step(VRPTWSolution start_solution) {
 		VRPTWSolution newSolution = start_solution.clone();
 	
 		// prendo un cliente a caso da una rotta a caso
@@ -223,27 +241,27 @@ public class VRPTWSolverThread implements Runnable {
 		
 		if (!inserted)
 			newSolution = start_solution;
-		else {
-			// controllo se ho migliorato o meno		
-			double cost_new = newSolution.cost();
-			double cost_old = start_solution.cost();
-			if (cost_new > cost_old) {
-				if (debug) System.out.print("thread: soluzione peggiore di quella di partenza: costo " + Math.round(newSolution.cost()) + " con " + newSolution.routes.size() + " mezzi");
-				if (Math.random() < (temperature/(temperature + initial_temperature*VRPTWParameters.delta))) {
-					if (debug) System.out.println(" accettata comunque (T=" + Math.round(temperature) + ")");
-				} else {
-					// rifiuto la nuova soluzione, torno alla vecchia
-					newSolution = start_solution;
-					if (debug) System.out.println(" rifiutata");
-				}
-			} else
-				if (debug) System.out.println("thread: soluzione migliore di quella di partenza: costo " + Math.round(newSolution.cost()) + " con " + newSolution.routes.size() + " mezzi");
-		}
+//		else {
+//			// controllo se ho migliorato o meno		
+//			double cost_new = newSolution.cost();
+//			double cost_old = start_solution.cost();
+//			if (cost_new > cost_old) {
+//				if (debug) System.out.print("thread: soluzione peggiore di quella di partenza: costo " + Math.round(newSolution.cost()) + " con " + newSolution.routes.size() + " mezzi");
+//				if (Math.random() < (temperature/(temperature + initial_temperature*VRPTWParameters.delta))) {
+//					if (debug) System.out.println(" accettata comunque (T=" + Math.round(temperature) + ")");
+//				} else {
+//					// rifiuto la nuova soluzione, torno alla vecchia
+//					newSolution = start_solution;
+//					if (debug) System.out.println(" rifiutata");
+//				}
+//			} else
+//				if (debug) System.out.println("thread: soluzione migliore di quella di partenza: costo " + Math.round(newSolution.cost()) + " con " + newSolution.routes.size() + " mezzi");
+//		}
 		return newSolution;		
 	}
 
 	// Originale
-	protected static VRPTWSolution annealing_step_orig(VRPTWSolution start_solution, double temperature) {
+	protected static VRPTWSolution annealing_step_orig(VRPTWSolution start_solution) {
 		VRPTWSolution newSolution = start_solution.clone();
 
 		// scelgo la route da allungare
@@ -299,19 +317,19 @@ public class VRPTWSolverThread implements Runnable {
 		}
 		
 		// controllo se ho migliorato o meno		
-		double cost_new = newSolution.cost();
-		double cost_old = start_solution.cost();
-		if (cost_new > cost_old) {
-			if (debug) System.out.print("thread: soluzione peggiore di quella di partenza: costo " + Math.round(newSolution.cost()) + " con " + newSolution.routes.size() + " mezzi");
-			if (Math.random() < (temperature/(temperature + VRPTWParameters.delta))) {
-				if (debug) System.out.println(" accettata comunque (T=" + Math.round(temperature) + ")");
-			} else {
-				// rifiuto la nuova soluzione, torno alla vecchia
-				newSolution = start_solution;
-				if (debug) System.out.println(" rifiutata");
-			}
-		} else
-			if (debug) System.out.println("thread: soluzione migliore di quella di partenza: costo " + Math.round(newSolution.cost()) + " con " + newSolution.routes.size() + " mezzi");
+//		double cost_new = newSolution.cost();
+//		double cost_old = start_solution.cost();
+//		if (cost_new > cost_old) {
+//			if (debug) System.out.print("thread: soluzione peggiore di quella di partenza: costo " + Math.round(newSolution.cost()) + " con " + newSolution.routes.size() + " mezzi");
+//			if (Math.random() < (temperature/(temperature + VRPTWParameters.delta))) {
+//				if (debug) System.out.println(" accettata comunque (T=" + Math.round(temperature) + ")");
+//			} else {
+//				// rifiuto la nuova soluzione, torno alla vecchia
+//				newSolution = start_solution;
+//				if (debug) System.out.println(" rifiutata");
+//			}
+//		} else
+//			if (debug) System.out.println("thread: soluzione migliore di quella di partenza: costo " + Math.round(newSolution.cost()) + " con " + newSolution.routes.size() + " mezzi");
 		
 		return newSolution;		
 	}
@@ -319,7 +337,7 @@ public class VRPTWSolverThread implements Runnable {
 
 	// Pairwise exchange, or Lin–Kernighan heuristics.
 	// The pairwise exchange or '2-opt' technique involves iteratively removing two edges and replacing these with two different edges 
-	protected static VRPTWSolution annealing_step_exchange(VRPTWSolution start_solution, double temperature) {
+	protected static VRPTWSolution annealing_step_exchange(VRPTWSolution start_solution) {
 		VRPTWSolution newSolution = start_solution.clone();
 		
 		Random rnd_gen = new Random();
@@ -352,19 +370,19 @@ public class VRPTWSolverThread implements Runnable {
 			return start_solution;
 		
 		// controllo se ho migliorato o meno		
-		double cost_new = newSolution.cost();
-		double cost_old = start_solution.cost();
-		if (cost_new > cost_old) {
-			if (debug) System.out.print("thread: soluzione peggiore di quella di partenza: costo " + Math.round(newSolution.cost()) + " con " + newSolution.routes.size() + " mezzi");
-			if (Math.random() < (temperature/(temperature + VRPTWParameters.delta))) {
-				if (debug) System.out.println(" accettata comunque (T=" + Math.round(temperature) + ")");
-			} else {
-				// rifiuto la nuova soluzione, torno alla vecchia
-				if (debug) System.out.println(" rifiutata");
-				return start_solution;
-			}
-		} else
-			if (debug) System.out.println("thread: soluzione migliore di quella di partenza: costo " + Math.round(newSolution.cost()) + " con " + newSolution.routes.size() + " mezzi");
+//		double cost_new = newSolution.cost();
+//		double cost_old = start_solution.cost();
+//		if (cost_new > cost_old) {
+//			if (debug) System.out.print("thread: soluzione peggiore di quella di partenza: costo " + Math.round(newSolution.cost()) + " con " + newSolution.routes.size() + " mezzi");
+//			if (Math.random() < (temperature/(temperature + VRPTWParameters.delta))) {
+//				if (debug) System.out.println(" accettata comunque (T=" + Math.round(temperature) + ")");
+//			} else {
+//				// rifiuto la nuova soluzione, torno alla vecchia
+//				if (debug) System.out.println(" rifiutata");
+//				return start_solution;
+//			}
+//		} else
+//			if (debug) System.out.println("thread: soluzione migliore di quella di partenza: costo " + Math.round(newSolution.cost()) + " con " + newSolution.routes.size() + " mezzi");
 	
 		return newSolution;
 	}
