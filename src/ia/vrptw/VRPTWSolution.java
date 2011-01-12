@@ -54,9 +54,7 @@ public class VRPTWSolution {
 		// route 1: 86 64 90 77 85 52 65 84 67;
 		// route 2: 23 21 50 20 24 22 49 19 26 25;
 
-		double km = 0.0;
-		for (VRPTWRoute r : routes)
-			km += r._travel_distance;
+		double km = getDistance();
 
 		System.out.println("Problem instance: "+_instance_name + ". Distance: "+km+ ". Vehicles: "+routes.size()+".");
 	}
@@ -66,10 +64,8 @@ public class VRPTWSolution {
 		// route 1: 86 64 90 77 85 52 65 84 67;
 		// route 2: 23 21 50 20 24 22 49 19 26 25;
 
-		double km = 0.0;
-		for (VRPTWRoute r : routes)
-			km += r._travel_distance;
-
+		double km = getDistance();
+	
 		System.out.println("Problem instance: "+_instance_name + ". Distance: "+km+ ". Vehicles: "+routes.size()+".");
 
 		for (int i=0; i<routes.size(); i++) {
@@ -109,6 +105,32 @@ public class VRPTWSolution {
 				tot_cust += r.customers.size() - 2;
 		}
 		return tot_cust;
+	}
+	
+	public double getDistance() {
+		double km = 0;
+		for (VRPTWRoute r : routes)
+			km += r._travel_distance;
+		return km;
+	}
+	
+	public int getVehicles(){
+		return routes.size();
+	}
+	
+	public String toString() { 
+		// Problem instance: RC104. Distance: 1135.48. Vehicles: 10.
+		// route 1: 86 64 90 77 85 52 65 84 67;
+		// route 2: 23 21 50 20 24 22 49 19 26 25
+		
+		double km = getDistance();
+	
+		String result = "Problem instance: "+_instance_name + ". Distance: "+km+ ". Vehicles: "+routes.size()+"."+'\n';
+
+		for (int i=0; i<routes.size(); i++) {
+			result += "route "+(i+1)+": "+ routes.get(i)+'\n';
+		}
+		return result;
 	}
 
 }

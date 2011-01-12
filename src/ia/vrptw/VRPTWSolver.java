@@ -2,6 +2,8 @@ package ia.vrptw;
 
 import ia.vrptw.VRPTWDrawingSolution.DrawingArea;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -12,6 +14,7 @@ import java.util.ListIterator;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 
+import javax.imageio.ImageIO;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
@@ -40,7 +43,21 @@ public class VRPTWSolver {
 		System.out.println("* inizio ottimizzazione *");
 		final VRPTWSolution solution = solver.resolve(problem);
 		System.out.println("* ottimizzazione terminata *");
-		solution.showAll();
+		solution.show();
+		
+		// Controllo record!
+		if (solution.getDistance() <= problem.getCurrentBestDistance() && solution.getVehicles() <= problem.getCurrentBestVehicles()){
+			System.out.println("* NEW RECORD *");
+			try{
+				BufferedWriter bw = new BufferedWriter(new FileWriter("problems/records", true));
+				bw.write(solution.toString());
+				bw.newLine();
+				bw.newLine();
+				bw.close();
+			} catch (Exception e) {
+				System.err.println("Impossibile aprire file dei record");
+			}
+		}
 	}
 
 	private VRPTWSolverThread[] threads;
