@@ -37,7 +37,7 @@ public class VRPTWSolver {
 	public static void main(String[] args) throws InterruptedException {
 		VRPTWProblem problem = new VRPTWProblem("C101", 50, 200);
 		//problem.show();
-		VRPTWSolver solver = new VRPTWSolver(4); // processori
+		VRPTWSolver solver = new VRPTWSolver(VRPTWParameters.threads);
 		//solver.activateDebugMode();
 		System.out.println("* inizio ottimizzazione *");
 		final VRPTWSolution solution = solver.resolve(problem);
@@ -64,9 +64,6 @@ public class VRPTWSolver {
 	private boolean debug = false;
 
 	public VRPTWSolver(int processors) {
-		if (processors > 1 && processors % 2 == 1)
-			throw new IllegalArgumentException("numero di thread non pari");
-		
 		_processors = processors;
 		threads = new VRPTWSolverThread[_processors];
 	}
