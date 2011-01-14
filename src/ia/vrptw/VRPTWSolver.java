@@ -2,8 +2,6 @@ package ia.vrptw;
 
 import ia.vrptw.VRPTWDrawingSolution.DrawingArea;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -26,10 +24,7 @@ import javax.swing.SwingUtilities;
  *
  */
 public class VRPTWSolver {
-
-	String filename = "frames/SoluzioneParziale_";
-	String estensione = ".png";
-	int progressivo = 0;
+	
 	/*
 	 * Main per avviare il solver sul problema specificato.
 	 * Questa classe e' sostanzialmente P0 nel paper.
@@ -37,38 +32,35 @@ public class VRPTWSolver {
 	public static void main(String[] args) throws InterruptedException {
 		VRPTWProblem problem = new VRPTWProblem("C101", 200);
 		//problem.show();
-		VRPTWSolver solver = new VRPTWSolver(VRPTWParameters.threads);
+		VRPTWSolver solver = new VRPTWSolver();
 		//solver.activateDebugMode();
+		solver.activateDrawingSolutionsMode();
 		System.out.println("* inizio ottimizzazione *");
 		final VRPTWSolution solution = solver.resolve(problem);
 		System.out.println("* ottimizzazione terminata *");
 		solution.show();
-		
-		// Controllo record!
-		if (solution.getDistance() <= problem.getCurrentBestDistance() && solution.getVehicles() <= problem.getCurrentBestVehicles()){
-			System.out.println("* NEW RECORD *");
-			try{
-				BufferedWriter bw = new BufferedWriter(new FileWriter("problems/records", true));
-				bw.write(solution.toString());
-				bw.newLine();
-				bw.newLine();
-				bw.close();
-			} catch (Exception e) {
-				System.err.println("Impossibile aprire file dei record");
-			}
-		}
+		solution.checkBestKnownSolutionImproved();
 	}
 
 	private VRPTWSolverThread[] threads;
 	private int _processors;
 	private boolean debug = false;
-
-	public VRPTWSolver(int processors) {
-		_processors = processors;
+	private boolean draw_solution = false;
+	String folder = "frames/";
+	String basename = "Soluzione";
+	String estensione = ".png";
+	int progressivo = 0;
+	
+	public VRPTWSolver() {
+		_processors = VRPTWParameters.threads;
 		threads = new VRPTWSolverThread[_processors];
 	}
 	
 	public VRPTWSolution resolve(VRPTWProblem problem) throws InterruptedException {
+
+		System.out.println("Execution parameters: thread="+VRPTWParameters.threads+", tau="+VRPTWParameters.tau+", sigma="+VRPTWParameters.sigma+", gamma="+VRPTWParameters.gamma+", beta="+VRPTWParameters.beta+", delta="+VRPTWParameters.delta);
+		progressivo = 0;
+		
 		// scelgo una soluzione da cui partire (generata tramite una euristica)
 		VRPTWSolution initialSolution = generateFirstSolution(problem);
 		VRPTWSolution finalSolution = initialSolution;
@@ -77,7 +69,8 @@ public class VRPTWSolver {
 		LinkedList<VRPTWSolution> solutions = new LinkedList<VRPTWSolution>();
 
 		// stampo anche la soluzione iniziale
-		printSolution(finalSolution, initialSolution , filename + (progressivo) + estensione);
+		if (draw_solution)
+			printSolution(finalSolution, initialSolution , progressivo);
 		progressivo++;
 		
 		// istanzio i thread paralleli
@@ -146,7 +139,8 @@ public class VRPTWSolver {
 			}
 			
 			// stampa la soluzione su file
-			printSolution(finalSolution, initialSolution , filename + (progressivo) + estensione);
+			if (draw_solution)
+				printSolution(finalSolution, initialSolution , progressivo);
 			progressivo++;
 			
 		}
@@ -159,6 +153,7 @@ public class VRPTWSolver {
 			_start_barrier.await();
 		} catch (BrokenBarrierException e) { }
 		
+		System.out.println("Terminato in "+progressivo+" iterazioni.");
 		// ritorno la meglio soluzione trovata finora
 		return finalSolution;
 	}
@@ -261,10 +256,15 @@ public class VRPTWSolver {
 		debug = true;
 	}
 	
-	public void printSolution(VRPTWSolution s, VRPTWSolution is, String f) {
-		final String filename = f;
+	public void activateDrawingSolutionsMode() {
+		draw_solution = true;
+	}
+	
+	public void printSolution(VRPTWSolution s, VRPTWSolution is, int progressivo) {
+		
 		final VRPTWSolution solution = s;
 		final VRPTWSolution initial_solution = is;
+		final String filename = folder + basename + "_" +solution._problem.getInstanceName() + "_"+ (progressivo) + estensione;
 		
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
@@ -272,7 +272,7 @@ public class VRPTWSolver {
 				DrawingArea drawingArea = new DrawingArea(solution, initial_solution);
 				
 				JFrame.setDefaultLookAndFeelDecorated(true);
-				JFrame frame = new JFrame("Solution");
+				JFrame frame = new JFrame("Solution map");
 				frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
 				frame.getContentPane().add(drawingArea);
 				frame.setSize(1024, 768);

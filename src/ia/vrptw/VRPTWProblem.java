@@ -19,9 +19,15 @@ public class VRPTWProblem {
 	String instance_name;
 	double distance;
 	double vehicleCapacity; // Q
-	double bestDistance;
-	int bestVehicles;
-
+	
+	// migliori soluzioni euristiche
+	double bestKnownDistance;
+	int bestKnownVehicles;
+	
+	// ottimi conosciuti
+	double optimumDistance;
+	int optimumVehicles;
+	
 	LinkedList<VRPTWCustomer> customers;
 	
 	/**
@@ -34,8 +40,10 @@ public class VRPTWProblem {
 	public VRPTWProblem(String name, double capacity) {
 		instance_name = name;
 		vehicleCapacity = capacity;
-		bestDistance = 0;
-		bestVehicles = 0;
+		bestKnownDistance = 0;
+		bestKnownVehicles = 0;
+		optimumDistance = 0;
+		optimumVehicles = 0;
 		
 		// init customers from file "instance_name"
 		customers = new LinkedList<VRPTWCustomer>();
@@ -50,10 +58,12 @@ public class VRPTWProblem {
 			while ((strLine = br.readLine()) != null)   { // read file line by line
 				String[] data = strLine.split("\t");
 				if (data[0].equals("Best")){
-					bestDistance = Double.parseDouble(data[1]);
-					bestVehicles = Integer.parseInt(data[2]);
-				} else 
-				{
+					bestKnownDistance = Double.parseDouble(data[1]);
+					bestKnownVehicles = Integer.parseInt(data[2]);
+				} else if (data[0].equals("Optimal")) {
+					optimumDistance = Double.parseDouble(data[1]);
+					optimumVehicles = Integer.parseInt(data[2]);
+				} else {
 					VRPTWCustomer customer = new VRPTWCustomer(Integer.parseInt(data[0]), Double.parseDouble(data[1]), Double.parseDouble(data[2]), Double.parseDouble(data[3]), Double.parseDouble(data[4]), Double.parseDouble(data[5]), Double.parseDouble(data[6]));
 					customers.add(customer);
 				}
@@ -94,11 +104,19 @@ public class VRPTWProblem {
 	}
 	
 	public int getCurrentBestVehicles() {
-		return bestVehicles;
+		return bestKnownVehicles;
 	}
 	
 	public double getCurrentBestDistance() {
-		return bestDistance;
+		return bestKnownDistance;
+	}
+	
+	public int getOptimumVehicles() {
+		return optimumVehicles;
+	}
+	
+	public double getOptiumumDistance() {
+		return optimumDistance;
 	}
 	
 	public VRPTWCustomer getWarehouse() {
