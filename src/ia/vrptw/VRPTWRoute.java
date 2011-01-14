@@ -38,15 +38,13 @@ public class VRPTWRoute {
 		// Calcolo l'ora di arrivo effettiva dal cliente che sto inserendo
 		double customer_arrival = prev_customer.getCompletedTime() + distance_prev_c;
 		double customer_start = Math.max(customer.getStartTimeWindow(), customer_arrival);
-		// Calcolo l'ora di arrivo effettiva dal cliente successivo se avvienisse l'inserimento
+		// Calcolo l'ora di arrivo effettiva dal cliente successivo se avvenisse l'inserimento
 		double next_customer_new_arrival = customer_start + customer.getServiceTime() + distance_c_next;
 		// Calcolo quando devo slittare la schedule per inserire il cliente
 		double push_forward_time = next_customer_new_arrival - next_customer.getArrivalTime();
-		
+
 		if ( (customer_arrival <= customer.getEndTimeWindow()) && push_forward_keep_feasibility(next_customer_idx, push_forward_time)) {
 			// Se l'inserimento e' fattibile aggiorna l'orario di arrivo effettivo ed eventualmente slitta i successivi
-
-			double old_pf = push_forward_time; //TODO DEBUG DA TOGLIERE!!!!!!
 
 			customer.setArrivalTime( customer_arrival );
 			customers.add(next_customer_idx, customer);
@@ -54,12 +52,6 @@ public class VRPTWRoute {
 			// Slitta i successivi
 			int i = next_customer_idx+1;
 			while ( (i<customers.size()) && push_forward_time > 0) {
-				if (customers.get(i).getArrivalTime() + push_forward_time > customers.get(i).getEndTimeWindow()) {	//TODO DEBUG DA TOGLIERE!!!!!!
-					System.out.println("Old pf: " + old_pf + "  current pf: " + push_forward_time);
-					System.out.println("Inserendo: " + customer);
-					System.out.println(customers.get(next_customer_idx));
-					System.out.println(customers.get(next_customer_idx+1));
-				}
 				double new_arrival = customers.get(i).getArrivalTime() + push_forward_time;
 				double old_start_time = customers.get(i).getActualStart();
 				customers.get(i).setArrivalTime( new_arrival );
@@ -89,6 +81,7 @@ public class VRPTWRoute {
 	
 	
 	public void removeCustomer(VRPTWCustomer customer) {
+
 		// check che il cliente sia in questa strada
 		int customer_idx = customers.indexOf(customer);
 		if (customer_idx == -1)
@@ -104,7 +97,7 @@ public class VRPTWRoute {
 		// Controllo se riesco a ridurre il tempo di inizio dei successivi
 		double next_customer_arrival = prev_customer.getCompletedTime() + distance_prev_next;
 		double push_backward_time = next_customer.getArrivalTime() - next_customer_arrival;
-		
+
 		// Riesco ad ridurre il tempo di inizio delle attività successive di `push_backward_time` unità di tempo
 		int i = customer_idx+1;
 		while ( (i<customers.size()) && push_backward_time > 0) {
@@ -112,7 +105,8 @@ public class VRPTWRoute {
 			double new_actual_arrival = customers.get(i).getArrivalTime() - push_backward_time;
 			customers.get(i).setArrivalTime( new_actual_arrival );
 			
-			push_backward_time = customers.get(i).getActualStart() - old_actual_start;
+			//push_backward_time = customers.get(i).getActualStart() - old_actual_start;
+			push_backward_time = old_actual_start - customers.get(i).getActualStart();
 			i++;
 		}
 		
@@ -126,21 +120,25 @@ public class VRPTWRoute {
 		
 
 	// Controlla la fattibilità di slittare la schedulazione di `push_forward_time` unità di tempo dal cliente `customer_idx` in poi.
-		// Ref. [Solomon - The Vehicle Routing and Scheduling Problem]
-		public boolean push_forward_keep_feasibility(int customer_idx, double push_forward_time) {
-			int i = customer_idx;
-			while ( (i<customers.size()) && (customers.get(i).getArrivalTime() + push_forward_time < customers.get(i).getEndTimeWindow()) ) {
-				// Decrementa il tempo di slittamento presso i clienti successivi se presso il cliente attuale c'era dell'attesa 
-				push_forward_time -= customers.get(i).getWaiting();
-				if (push_forward_time <= 0)
-					// Lo slittamente è compensato da tempi di attesa presso clienti successivi nella rotta
-					return true;	
-				i++;
-			}
-			if ( i==customers.size() )
-				return true;
-			return false;
+	// Ref. [Solomon - The Vehicle Routing and Scheduling Problem]
+	public boolean push_forward_keep_feasibility(int customer_idx, double push_forward_time) {
+		if (push_forward_time < 0)
+			return true;	// Per definizione
+		
+		int i = customer_idx;
+		while ( (i<customers.size()) && (customers.get(i).getArrivalTime() + push_forward_time < customers.get(i).getEndTimeWindow()) ) {
+			// Decrementa il tempo di slittamento presso i clienti successivi se presso il cliente attuale c'era dell'attesa 
+			push_forward_time -= customers.get(i).getWaiting();
+			if (push_forward_time <= 0)
+				// Lo slittamente è compensato da tempi di attesa presso clienti successivi nella rotta
+				return true;	
+			i++;
 		}
+		if ( i==customers.size() )
+			return true;
+
+		return false;
+	}
 
 	// Restituisce i customer migliori candidati all'inserimento nella rotta corrente.
 	public LinkedList<VRPTWCustomer> candidate_customers(LinkedList<VRPTWCustomer> unallocated_pool) {
@@ -234,7 +232,9 @@ public class VRPTWRoute {
 			// Calcolo l'ora di arrivo effettiva dal cliente che sto inserendo
 			double customer_arrival = Math.max(customer.getStartTimeWindow(), prev_customer.getCompletedTime() + distance_prev_c);
 			// Calcolo l'ora di arrivo effettiva dal cliente successivo se avvienisse l'inserimento
-			double next_customer_new_arrival = Math.max(next_customer.getArrivalTime(), customer_arrival + customer.getServiceTime() + distance_c_next);  //TODO dovrebbe essere inutile, testa!
+			double next_customer_new_arrival = Math.max(next_customer.getArrivalTime(), customer_arrival + customer.getServiceTime() + distance_c_next);
+			double next_customer_new_arrival_ = customer_arrival + customer.getServiceTime() + distance_c_next;
+
 			// Calcolo quando devo slittare la schedule per inserire il cliente 
 			double push_forward_time = Math.max(0, next_customer_new_arrival - next_customer.getArrivalTime());
 			
@@ -296,13 +296,6 @@ public class VRPTWRoute {
 		return description;
 	}
 	
-
-	// Importa la descrizione testuale della route in output da toString per ricostruirla
-	// (funzione con finalità di test)
-	public boolean import_route(String text_description) {	//TODO non fatto
-		return true;
-	}
-	
 	
 	// Controlla la correttezza dello scheduling
 	// (funzione con finalità di test)
@@ -313,7 +306,7 @@ public class VRPTWRoute {
 		while(itr.hasNext()) {
 			VRPTWCustomer c = itr.next();
 			double distance = VRPTWUtils.distance(prev_customer, c);
-			difference = prev_customer.getCompletedTime()+distance - c.getArrivalTime();
+			difference = Math.abs(prev_customer.getCompletedTime()+distance - c.getArrivalTime());
 			if (difference > 0.001)
 				return false;
 

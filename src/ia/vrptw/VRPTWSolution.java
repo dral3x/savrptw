@@ -1,6 +1,7 @@
 package ia.vrptw;
 
 import java.util.LinkedList;
+import java.util.Scanner;
 
 /**
  * @author Alessandro Calzavara
@@ -23,7 +24,6 @@ public class VRPTWSolution {
 
 		_problem = problem;
 		_instance_name = problem.getInstanceName();
-		_max_vehicles = problem.getMaxVehicles();
 		routes = new LinkedList<VRPTWRoute>();
 	}
 
@@ -73,6 +73,28 @@ public class VRPTWSolution {
 	
 	public void addRoute(VRPTWRoute route) {
 		routes.add(route);
+	}
+	
+	// Importa la descrizione testuale della route in output da toString per ricostruirla
+	// (funzione con finalità di test)
+	public void addRoute(String route_description) {
+		VRPTWRoute newroute = new VRPTWRoute(_problem.getWarehouse(), _problem.getVehicleCapacity());
+		
+		Scanner scanner = new Scanner(route_description);
+		scanner.useDelimiter(" ");
+		
+		while ( scanner.hasNext() ) {
+		int customerid = Integer.parseInt(scanner.next());
+			VRPTWCustomer customer = _problem.getCustomer(customerid);
+			if (!customer.isWarehouse()) {
+				if (customer.getArrivalTime() != 0) {
+					System.err.println("Cliente già inserito");
+					System.exit(1);
+				}
+				newroute.addCustomer(customer);
+			}
+	    }		
+		routes.add(newroute);
 	}
 
 	public void removeRoute(VRPTWRoute route) {

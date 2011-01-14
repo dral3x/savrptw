@@ -18,7 +18,6 @@ public class VRPTWProblem {
 
 	String instance_name;
 	double distance;
-	int maxVehicles;
 	double vehicleCapacity; // Q
 	double bestDistance;
 	int bestVehicles;
@@ -32,9 +31,8 @@ public class VRPTWProblem {
 	 * @param vehicles numero di veicoli disponibili (max)
 	 * @param capacity capacit� dei veicoli (uguale per tutti i veicoli)
 	 */
-	public VRPTWProblem(String name, int vehicles, double capacity) {
+	public VRPTWProblem(String name, double capacity) {
 		instance_name = name;
-		maxVehicles = vehicles;
 		vehicleCapacity = capacity;
 		bestDistance = 0;
 		bestVehicles = 0;
@@ -80,19 +78,15 @@ public class VRPTWProblem {
 		return instance_name;
 	}
 	
-	public VRPTWCustomer getCustomer(int customer) {
-		if (customer >= 0 && customer <customers.size()) {
-			return customers.get(customer);
-		} else {
-			return null;
-		}
+	public VRPTWCustomer getCustomer(int customerid) {
+		for (VRPTWCustomer c : customers)
+			if (c._id == customerid)
+				return c;
+		return null;
+		
 	}
 	public int getNumberOfCustomers() {
 		return customers.size();
-	}
-	
-	public int getMaxVehicles() {
-		return maxVehicles;
 	}
 	
 	public double getVehicleCapacity() {

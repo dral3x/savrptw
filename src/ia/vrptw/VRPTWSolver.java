@@ -35,7 +35,7 @@ public class VRPTWSolver {
 	 * Questa classe e' sostanzialmente P0 nel paper.
 	 */
 	public static void main(String[] args) throws InterruptedException {
-		VRPTWProblem problem = new VRPTWProblem("C101", 50, 200);
+		VRPTWProblem problem = new VRPTWProblem("C101", 200);
 		//problem.show();
 		VRPTWSolver solver = new VRPTWSolver(VRPTWParameters.threads);
 		//solver.activateDebugMode();
@@ -72,7 +72,7 @@ public class VRPTWSolver {
 		// scelgo una soluzione da cui partire (generata tramite una euristica)
 		VRPTWSolution initialSolution = generateFirstSolution(problem);
 		VRPTWSolution finalSolution = initialSolution;
-		
+
 		System.out.println("Soluzione di partenza: costo " + finalSolution.cost() + " (km = "+finalSolution.totalTravelDistance()+", mezzi = " + finalSolution.routes.size() + ")");
 		LinkedList<VRPTWSolution> solutions = new LinkedList<VRPTWSolution>();
 
@@ -134,7 +134,7 @@ public class VRPTWSolver {
 				}
 				
 			}
-			
+
 			// controllo se � migliore di quella che avevo prima
 			if (bestSolution.cost() < finalSolution.cost()) {
 				finalSolution = bestSolution;
@@ -213,6 +213,8 @@ public class VRPTWSolver {
 				if (debug) System.out.println("Generazione di una nuova rotta");			
 			}
 		}
+		if (route.customers.size() > 2)
+			solution.addRoute(route);
 		return solution;
 	}
 	
