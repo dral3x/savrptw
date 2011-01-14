@@ -1,5 +1,8 @@
 package ia.vrptw;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.text.DecimalFormat;
 import java.util.LinkedList;
 import java.util.Scanner;
 
@@ -52,8 +55,14 @@ public class VRPTWSolution {
 		// Problem instance: RC104. Distance: 1135.48. Vehicles: 10.
 
 		double km = getDistance();
-
-		System.out.println("Problem instance: "+_instance_name + ". Distance: "+km+ ". Vehicles: "+routes.size()+".");
+		DecimalFormat twoDForm = new DecimalFormat("#.##");
+			
+		System.out.print("Problem instance: "+_instance_name + ". Distance: "+twoDForm.format(km)+ ". Vehicles: "+routes.size()+".");
+		if (_problem.getOptiumumDistance()>0.001) {
+			double optimumDiff = (km-_problem.getOptiumumDistance())/km;
+			System.out.print(" Optimus distance: "+twoDForm.format(optimumDiff*100)+"%.");
+		}
+		System.out.println();
 	}
 
 	public void showAll() { 
@@ -61,13 +70,31 @@ public class VRPTWSolution {
 		// route 1: 86 64 90 77 85 52 65 84 67;
 		// route 2: 23 21 50 20 24 22 49 19 26 25;
 
-		double km = getDistance();
-	
-		System.out.println("Problem instance: "+_instance_name + ". Distance: "+km+ ". Vehicles: "+routes.size()+".");
-
+		show();
+		
 		for (int i=0; i<routes.size(); i++) {
 			System.out.print("route "+(i+1)+": ");
 			routes.get(i).show();
+		}
+	}
+	
+	public void checkBestKnownSolutionImproved() {
+		// Controllo record!
+		if (this.getDistance() <= _problem.getCurrentBestDistance() || this.getVehicles() < _problem.getCurrentBestVehicles()){
+			System.out.println("* NEW RECORD *");
+			try{
+				BufferedWriter bw = new BufferedWriter(new FileWriter("problems/records", true));
+				bw.write("NEW RECORD");
+				bw.newLine();
+				bw.write("Parameters: thread="+VRPTWParameters.threads+", tau="+VRPTWParameters.tau+", sigma="+VRPTWParameters.sigma+", gamma="+VRPTWParameters.gamma+", beta="+VRPTWParameters.beta+", delta="+VRPTWParameters.delta);
+				bw.newLine();
+				bw.write(this.toString());
+				bw.newLine();
+				bw.newLine();
+				bw.close();
+			} catch (Exception e) {
+				System.err.println("Impossibile aprire file dei record");
+			}
 		}
 	}
 	

@@ -30,7 +30,6 @@ public class VRPTWSolverThreadTest {
 	@Test
 	public void testAnnealing_step() {
 		
-		expect(problem.getMaxVehicles()).andReturn(100).anyTimes();
 		VRPTWCustomer w = new VRPTWCustomer(1, 40, 50, 0, 0, 200, 0);
 		expect(problem.getWarehouse()).andReturn(w).anyTimes();
 		

@@ -26,14 +26,14 @@ public class VRPTWDrawingSolution {
 
 		VRPTWProblem problem = new VRPTWProblem("C101", 200);
 		// problem.show();
-		VRPTWSolver solver = new VRPTWSolver(1); // processori
+		VRPTWSolver solver = new VRPTWSolver(); // processori
 		// solver.activateDebugMode();
 		System.out.println("* inizio ottimizzazione *");
 		final VRPTWSolution solution = solver.generateFirstSolution(problem);
 		System.out.println("* ottimizzazione terminata *");
 		// solution.show();
 		
-		solver.printSolution(solution, solution, "prova.png");
+		solver.printSolution(solution, solution, 0);
 		
 //		SwingUtilities.invokeLater(new Runnable() {
 //			public void run() {
