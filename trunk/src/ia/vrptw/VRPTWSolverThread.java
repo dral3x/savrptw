@@ -308,7 +308,6 @@ public class VRPTWSolverThread implements Runnable {
 		}
 		
 		// Se tutti gli inserimenti non sono fattibili nella rotta corrente crea una nuova rotta
-		// TODO: non e' un po' un controsenso? cerchi un custumer vicino alla rotta ma se non trovi posto per inserirlo ne crei una nuova (quando l'obiettivo Ã¨ minimizzare le rotte)
 		if (!inserted) {
 			VRPTWRoute route = new VRPTWRoute(r1._warehouse, r1._initial_capacity);
 			route.addCustomer(nearestCustomer);

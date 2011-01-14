@@ -24,7 +24,7 @@ public class VRPTWDrawingSolution {
 
 	public static void main(String[] args) {
 
-		VRPTWProblem problem = new VRPTWProblem("C101", 50, 200);
+		VRPTWProblem problem = new VRPTWProblem("C101", 200);
 		// problem.show();
 		VRPTWSolver solver = new VRPTWSolver(1); // processori
 		// solver.activateDebugMode();
