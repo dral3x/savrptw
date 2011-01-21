@@ -11,6 +11,7 @@ public class VRPTWBenchmark {
 
 	public static void main(String[] args) throws InterruptedException {
 
+		
 		VRPTWProblem c1_problems[] = {
 									new VRPTWProblem("C101", 200), new VRPTWProblem("C102", 200),
 									new VRPTWProblem("C103", 200), new VRPTWProblem("C104", 200),
@@ -18,6 +19,13 @@ public class VRPTWBenchmark {
 									new VRPTWProblem("C107", 200), new VRPTWProblem("C108", 200),
 									new VRPTWProblem("C109", 200)
 									};
+		
+		VRPTWProblem c2_problems[] = {
+									new VRPTWProblem("C201", 700), new VRPTWProblem("C202", 700),
+									new VRPTWProblem("C203", 700), new VRPTWProblem("C204", 700),
+									new VRPTWProblem("C205", 700), new VRPTWProblem("C206", 700),
+									new VRPTWProblem("C207", 700), new VRPTWProblem("C208", 700)
+				};
 
 		VRPTWProblem r1_problems[] = {
 									new VRPTWProblem("R101", 200),
@@ -37,9 +45,9 @@ public class VRPTWBenchmark {
 									new VRPTWProblem("RC108", 200)
 									};
 
-		for (VRPTWProblem p : rc1_problems) {
+		for (VRPTWProblem p : c2_problems) {
 			VRPTWSolver solver = new VRPTWSolver();
-			solver.activateDrawingSolutionsMode();
+			//solver.activateDrawingSolutionsMode();
 			System.out.println("<< INIZIO OTTIMIZZAZIONE "+p.getInstanceName()+" >> ");
 			VRPTWSolution solution = solver.resolve(p);
 			System.out.println("<< OTT.COMPLETATA >> ");
