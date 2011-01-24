@@ -37,7 +37,12 @@ public class VRPTWBenchmark {
 									};
 
 		VRPTWProblem r2_problems[] = {
-									new VRPTWProblem("R201", 1000)
+									new VRPTWProblem("R201", 1000), new VRPTWProblem("R202", 1000),
+									new VRPTWProblem("R203", 1000), new VRPTWProblem("R204", 1000),
+									new VRPTWProblem("R205", 1000), new VRPTWProblem("R206", 1000),
+									new VRPTWProblem("R207", 1000), new VRPTWProblem("R208", 1000),
+									new VRPTWProblem("R209", 1000), new VRPTWProblem("R210", 1000),
+									new VRPTWProblem("R211", 1000)
 									};
 		
 		VRPTWProblem rc1_problems[] = {
@@ -49,10 +54,12 @@ public class VRPTWBenchmark {
 
 		VRPTWProblem rc2_problems[] = {
 									new VRPTWProblem("RC201", 1000), new VRPTWProblem("RC202", 1000),
-									new VRPTWProblem("RC205", 1000)
+									new VRPTWProblem("RC203", 1000), new VRPTWProblem("RC204", 1000),
+									new VRPTWProblem("RC205", 1000), new VRPTWProblem("RC206", 1000),
+									new VRPTWProblem("RC207", 1000), new VRPTWProblem("RC208", 1000),
 									};
 
-		for (VRPTWProblem p : rc1_problems) {
+		for (VRPTWProblem p : rc2_problems) {
 			VRPTWSolver solver = new VRPTWSolver();
 			//solver.activateDrawingSolutionsMode();
 			System.out.println("<< INIZIO OTTIMIZZAZIONE "+p.getInstanceName()+" >> ");
